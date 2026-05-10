@@ -1,4 +1,4 @@
-import { db } from "../../config/db";
+import { db } from "../../config/db.js";
 
 const logActivity = async (idUsuario, acao, detalhes) => {
     try {
@@ -58,14 +58,35 @@ const checkOut = async (req, res) => {
             [reserva[0].id]
         );
 
-        await db.query("UPDATE quartos SET status = 'DISPONIVEL' WHERE id = ?", [quarto_id]);
+        await db.query("UPDATE quartos SET status = 'LIMPEZA' WHERE id = ?", [quarto_id]);
 
         await logActivity(idFuncionario, "CHECK_OUT", `Check-out realizado no quarto ID ${quarto_id}`);
 
-        return res.status(200).json({ message: "Check-out realizado e quarto liberado." });
+        return res.status(200).json({ message: "Check-out realizado e quarto em limpeza." });
     } catch (erro) {
         return res.status(500).json({ message: "Erro ao realizar check-out." });
     }
 };
 
-export { checkIn, checkOut };
+const concluirLimpeza = async (req, res) => {
+    try {
+        const { quarto_id } = req.body;
+        const idFuncionario = req.user?.id;
+
+        const [quarto] = await db.query("SELECT status FROM quartos WHERE id = ?", [quarto_id]);
+        
+        if (quarto.length === 0 || quarto[0].status !== 'LIMPEZA') {
+            return res.status(400).json({ message: "Este quarto não está em processo de limpeza." });
+        }
+
+        await db.query("UPDATE quartos SET status = 'DISPONIVEL' WHERE id = ?", [quarto_id]);
+
+        await logActivity(idFuncionario, "LIMPEZA_CONCLUIDA", `Quarto ID ${quarto_id} agora está disponível.`);
+
+        return res.status(200).json({ message: "Limpeza concluída. Quarto liberado para novos hóspedes!" });
+    } catch (erro) {
+        return res.status(500).json({ message: "Erro ao atualizar status de limpeza." });
+    }
+};
+
+export { checkIn, checkOut, concluirLimpeza };

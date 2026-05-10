@@ -4,7 +4,7 @@ import { db } from '../../config/db.js';
 const createUser = async (req, res) => {
     
     try {
-        const { nome, cpf, email, senha, telefone, tipo } = req.body
+        const { nome, cpf, email, senha, telefone, tipo } = req.body;
         if(nome.length < 5 || !nome){
             return res.status(400).json({message: 'Nome inválido. Mínimo de 5 caracteres.'});
         }
@@ -12,7 +12,7 @@ const createUser = async (req, res) => {
             return res.status(400).json({message: "E-mail inválido."});
         }
 
-        const tiposValidos = ["HOSPEDE", "FUNCIONARIO"];
+        const tiposValidos = ["RECEPCIONISTA", "GERENTE"];
         if(!tiposValidos.includes(tipo?.toUpperCase())){
             return res.status(400).json({message: "Tipo de usuário inválido. Use 'HOSPEDE' ou 'FUNCIONARIO'." })
         };
@@ -21,7 +21,7 @@ const createUser = async (req, res) => {
         const hashPassword = await bcrypt.hash(senha, saltRounds);
 
         const [result] = await db.query( 
-            "INSERT INTO usuario (nome, cpf, email, password_hash, telefone, tipo) VALUES (?, ?, ?, ?, ?, ?)", [nome, cpf, email,hashPassword, telefone, tipo.toUpperCase()]
+            "INSERT INTO usuario (nome, cpf, email, senha, telefone, tipo) VALUES (?, ?, ?, ?, ?, ?)", [nome, cpf, email,hashPassword, telefone, tipo.toUpperCase()]
         );
 
         if(result.affectedRows === 0) return res.status(400).json({message: "Não foi possível criar o usuário."});

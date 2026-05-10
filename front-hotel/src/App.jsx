@@ -1,9 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginUser from './pages/LoginController';
 import CadasterUser from './pages/CadasterUser';
 import HomePage from './pages/HomePage';
 import MinhasReservas from './components/Reserva/MinhasReservas';
 import ListaQuartos from './components/Quarto/ListarQuartos';
+import LoginUser from './pages/LoginPage';
 
 function App() {
   return (

@@ -10,7 +10,7 @@ const CadasterUser = () => {
         email: "",
         senha: "",
         telefone: "",
-        tipo: "HOSPEDE"
+        tipo: "RECEPCIONISTA"
     });
 
     const [message, setMessage] = useState(null);
@@ -146,8 +146,8 @@ const CadasterUser = () => {
                         name="tipo"
                         onChange={handleChange}
                     >
-                        <option value="HOSPEDE">Hóspede</option>
-                        <option value="FUNCIONARIO">Funcionário</option>
+                        <option value="RECEPCIONISTA">Recepcionista</option>
+                        <option value="GERENTE">Gerente</option>
                     </select>
 
                     <button style={styles.button} type="submit" disabled={loading}>

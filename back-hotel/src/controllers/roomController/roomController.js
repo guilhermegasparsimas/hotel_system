@@ -79,7 +79,7 @@ const updateRoomStatus = async (req, res) => {
         const { id, novoStatus } = req.body;
         const idFuncionario = req.user?.id;
 
-        const statusValidos = ["DISPONIVEL", "OCUPADO", "MANUTENCAO"];
+        const statusValidos = ["DISPONIVEL", "OCUPADO", "MANUTENCAO", "LIMPEZA"];
         if (!statusValidos.includes(novoStatus?.toUpperCase())) {
             return res.status(400).json({ message: "Status inválido fornecido." });
         }

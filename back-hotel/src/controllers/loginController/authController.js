@@ -1,4 +1,4 @@
-import { db } from '../../config/db.js';
+import { db } from '../../config/db.js'; 
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -6,58 +6,63 @@ const login = async (req, res) => {
     try {
         const { email, senha } = req.body;
 
-        if (!email || !senha) return res.status(400).json({ message: "Email e senha são obrigatórios." })
+        if (!email || !senha) {
+            return res.status(400).json({ message: "Email e senha são obrigatórios." });
+        }
 
+        // 1. Busca otimizada: LIMIT 1 é excelente para performance
         const [result] = await db.query(
-            ` 
-              SELECT id, nome, cpf, email, password_hash, tipo 
-              FROM usuario 
-              WHERE email = ? LIMIT 1
-            `, [email]
-            ,
-        )
-         if(result.length === 0){
-            return res.status(401).json({message: "Credenciais inválidas."})
-         };
+            "SELECT id, nome, cpf, email, senha, tipo FROM usuario WHERE email = ? LIMIT 1", 
+            [email]
+        );
 
-         const user = result[0];
+        // 2. Segurança: Use mensagens genéricas para evitar enumeração de usuários
+        if (result.length === 0) {
+            return res.status(401).json({ message: "Credenciais inválidas." });
+        }
 
-         const ok = await bcrypt.compare(senha, user.password_hash);
-         if(!ok){
-            return res.status(401).json({message: "Senha inválida!"})
-         };
+        const user = result[0];
 
-         const token = jwt.sign(
-            {
-                sub: user.id,
-                tipo: user.tipo
+        // 3. Comparação de Hash
+        const ok = await bcrypt.compare(senha, user.senha);
+        if (!ok) {
+            // Mensagem igual à de cima para segurança
+            return res.status(401).json({ message: "Credenciais inválidas." });
+        }
+
+        // 4. Geração de Token (Ajustado para bater com seu middleware anterior)
+        const token = jwt.sign(
+            { 
+                id: user.id, // Mudei de 'sub' para 'id' para facilitar no seu middleware
+                tipo: user.tipo 
             },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: "1h"
-            }
-         );
+            process.env.JWT_SECRET || 'chave_reserva_segura',
+            { expiresIn: "8h" } // Hotéis costumam usar sessões mais longas (turno de trabalho)
+        );
 
-         return res.json({
+        // 5. Resposta limpa
+        return res.json({
             message: "Login realizado com sucesso.",
             token,
             usuario: {
+                id: user.id,
                 nome: user.nome,
-                cpf: user.cpf,
                 email: user.email,
                 tipo: user.tipo,
             }
         });
+
     } catch (error) {
-        res.status(500).json({ message: "Erro ao realizar login.", error: error.message })
+        // Log detalhado apenas no servidor
+        console.error("Erro no processo de Login:", error);
+        res.status(500).json({ message: "Erro interno no servidor." });
     }
 };
 
 const logout = async (req, res) => {
-    try {
-        return res.status(200).json({message: "Logout realizado com sucesso"})
-    } catch (error) {
-        return res.status(500).json({message: "Error", error: error.message})
-    }
+    // No JWT, o logout é feito limpando o token no Frontend (localStorage.clear())
+    // Mas é bom retornar sucesso para o usuário.
+    return res.status(200).json({ message: "Logout realizado com sucesso" });
 };
+
 export { login, logout };
