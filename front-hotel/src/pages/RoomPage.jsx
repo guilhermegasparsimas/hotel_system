@@ -1,15 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import ModalNovoQuarto from '../components/Quarto/ModalNovoQuarto';
 
 const RoomPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [user, setUser] = useState(null);
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [filtro, setFiltro] = useState('TODOS');
+    const [filtro, setFiltro] = useState(location.state?.filtroInicial || 'TODOS');
 
     const fetchRooms = useCallback(async (token) => {
         if (!token) return;

@@ -20,66 +20,47 @@ const HomePage = () => {
     const fetchStats = useCallback(async () => {
         const token = localStorage.getItem('token');
         if (!token) return;
-
         try {
             const response = await axios.get('http://localhost:7070/quartos/stats', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setStats(response.data);
         } catch (err) {
-            console.error("Erro ao buscar estatísticas: Token inválido ou expirado.");
-            // Se o erro for 401 ou 403, é recomendável deslogar
-            if (err.response?.status === 401) {
-                handleLogout();
-            }
+            if (err.response?.status === 401) handleLogout();
         }
-    }, [navigate]);
+    }, []);
 
     useEffect(() => {
         const savedUser = localStorage.getItem('usuario');
         const token = localStorage.getItem('token');
-
         if (!savedUser || !token) {
             navigate('/login');
         } else {
-            try {
-                setUser(JSON.parse(savedUser));
-                fetchStats();
-
-                // Atualização em tempo real (Polling)
-                const interval = setInterval(fetchStats, 5000);
-                return () => clearInterval(interval);
-            } catch (e) {
-                console.error("Erro ao processar dados do usuário");
-                handleLogout();
-            }
+            setUser(JSON.parse(savedUser));
+            fetchStats();
+            const interval = setInterval(fetchStats, 5000);
+            return () => clearInterval(interval);
         }
     }, [navigate, fetchStats]);
 
     const handleLogout = () => {
         localStorage.clear();
-        navigate('/login'); // Ajustado para a rota padrão de login
+        navigate('/login');
     };
 
     if (!user) return null;
-
     const isStaff = user.tipo === 'GERENTE' || user.tipo === 'RECEPCIONISTA';
-
-    // Função para formatar números (ex: 01, 02...)
     const formatNumber = (num) => (num < 10 ? `0${num}` : num);
 
     return (
         <div style={styles.container}>
-            {/* SIDEBAR */}
             <aside style={styles.sidebar}>
                 <div style={styles.logoSection}>
-                    <h2 style={styles.logo}>Hotel Gestão</h2>
+                    <h2 style={styles.logo}>Hotel<span style={{ color: '#3498db' }}>Gestão</span></h2>
                 </div>
-
                 <nav style={styles.nav}>
                     <button style={styles.navItemActive} onClick={() => navigate('/home')}>🏠 Dashboard</button>
                     <button style={styles.navItem} onClick={() => navigate('/quartos')}>🛏️ Mapa de Quartos</button>
-
                     {isStaff && (
                         <>
                             <button style={styles.navItem} onClick={() => navigate('/hospedes')}>👥 Hóspedes</button>
@@ -87,19 +68,15 @@ const HomePage = () => {
                         </>
                     )}
                 </nav>
-
-                <button style={styles.logoutBtn} onClick={handleLogout}>
-                    Sair da Conta
-                </button>
+                <button style={styles.logoutBtn} onClick={handleLogout}>Sair da Conta</button>
             </aside>
 
-            {/* CONTEÚDO PRINCIPAL */}
             <main style={styles.main}>
                 <header style={styles.header}>
                     <div>
-                        <h1 style={styles.welcome}>Bem-vindo, {user.nome}!</h1>
+                        <h1 style={styles.welcome}>Olá, {user.nome}! 👋</h1>
                         <span style={styles.roleTag}>
-                            {user.tipo === 'GERENTE' ? '⭐ Administrador (Gerente)' : '🔑 Staff (Recepcionista)'}
+                            {user.tipo === 'GERENTE' ? '⭐ Administrador' : '🔑 Staff Recepcionista'}
                         </span>
                     </div>
                     <div style={styles.topInfo}>
@@ -111,85 +88,93 @@ const HomePage = () => {
                     </div>
                 </header>
 
-                <h2 style={styles.sectionTitle}>Status dos Quartos em Tempo Real</h2>
+                <h2 style={styles.sectionTitle}>Status Operacional</h2>
                 <section style={styles.grid}>
-                    <div style={styles.card}>
+                    <div style={{ ...styles.card, borderTop: '4px solid #10b981' }}>
                         <h3 style={styles.cardTitle}>Disponíveis</h3>
-                        <p style={{ ...styles.cardValue, color: '#2ecc71' }}>{formatNumber(stats.disponiveis)}</p>
+                        <p style={{ ...styles.cardValue, color: '#10b981' }}>{formatNumber(stats.disponiveis)}</p>
                     </div>
-                    <div style={styles.card}>
+                    <div style={{ ...styles.card, borderTop: '4px solid #ef4444' }}>
                         <h3 style={styles.cardTitle}>Ocupados</h3>
-                        <p style={{ ...styles.cardValue, color: '#e74c3c' }}>{formatNumber(stats.ocupados)}</p>
+                        <p style={{ ...styles.cardValue, color: '#ef4444' }}>{formatNumber(stats.ocupados)}</p>
                     </div>
-                    <div style={styles.card}>
+                    <div style={{ ...styles.card, borderTop: '4px solid #f59e0b' }}>
                         <h3 style={styles.cardTitle}>Em Limpeza</h3>
-                        <p style={{ ...styles.cardValue, color: '#f1c40f' }}>{formatNumber(stats.limpeza)}</p>
+                        <p style={{ ...styles.cardValue, color: '#f59e0b' }}>{formatNumber(stats.limpeza)}</p>
                     </div>
-                    <div style={styles.card}>
+                    <div style={{ ...styles.card, borderTop: '4px solid #6b7280' }}>
                         <h3 style={styles.cardTitle}>Manutenção</h3>
-                        <p style={{ ...styles.cardValue, color: '#95a5a6' }}>{formatNumber(stats.manutencao)}</p>
+                        <p style={{ ...styles.cardValue, color: '#6b7280' }}>{formatNumber(stats.manutencao)}</p>
                     </div>
                 </section>
 
                 {isStaff && (
                     <section style={styles.actionsSection}>
-                        <h2 style={styles.sectionTitle}>Controle de Operações</h2>
+                        <h2 style={styles.sectionTitle}>Ações Rápidas</h2>
                         <div style={styles.actionRow}>
                             <button style={styles.primaryAction} onClick={() => setIsModalQuartoOpen(true)}>
-                                ✨ Cadastrar Novo Quarto
+                                <span>✨</span> Cadastrar Quarto
                             </button>
                             <button style={styles.secondaryAction} onClick={() => setIsModalHospedeOpen(true)}>
-                                👤 Novo Hóspede
+                                <span>👤</span> Novo Hóspede
                             </button>
-                            <button style={styles.maintenanceAction} onClick={() => navigate('/quartos')}>
-                                🔧 Gerenciar Manutenções
+                            <button style={styles.maintenanceAction} onClick={() => navigate('/quartos', { state: { filtroInicial: 'MANUTENCAO' } })}>
+                                <span>🔧</span> Ver Manutenções
                             </button>
                         </div>
                     </section>
                 )}
             </main>
 
-            <ModalNovoQuarto
-                isOpen={isModalQuartoOpen}
-                onClose={() => {
-                    setIsModalQuartoOpen(false);
-                    fetchStats();
-                }}
-            />
-            <ModalNovoHospede
-                isOpen={isModalHospedeOpen}
-                onClose={() => {
-                    setIsModalHospedeOpen(false);
-                    fetchStats();
-                }}
-            />
+            <ModalNovoQuarto isOpen={isModalQuartoOpen} onClose={() => { setIsModalQuartoOpen(false); fetchStats(); }} />
+            <ModalNovoHospede isOpen={isModalHospedeOpen} onClose={() => { setIsModalHospedeOpen(false); fetchStats(); }} />
         </div>
     );
 };
 
 const styles = {
-    container: { display: 'flex', height: '100vh', backgroundColor: '#f5f7fb', fontFamily: 'Segoe UI, sans-serif' },
-    sidebar: { width: '260px', backgroundColor: '#2c3e50', color: '#fff', display: 'flex', flexDirection: 'column', padding: '30px 20px' },
-    logoSection: { borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '30px', paddingBottom: '20px' },
-    logo: { fontSize: '22px', fontWeight: 'bold', textAlign: 'center', color: '#ecf0f1' },
-    nav: { display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 },
-    navItem: { background: 'none', border: 'none', color: '#bdc3c7', textAlign: 'left', padding: '12px 15px', borderRadius: '8px', cursor: 'pointer', fontSize: '15px', transition: '0.2s' },
-    navItemActive: { background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', textAlign: 'left', padding: '12px 15px', borderRadius: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' },
-    logoutBtn: { padding: '12px', borderRadius: '8px', border: '1px solid #e74c3c', background: 'transparent', color: '#e74c3c', cursor: 'pointer', fontWeight: 'bold' },
-    main: { flex: 1, padding: '40px', overflowY: 'auto' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' },
-    welcome: { fontSize: '28px', color: '#2c3e50', margin: 0 },
-    roleTag: { fontSize: '12px', backgroundColor: '#d1d8e0', color: '#2c3e50', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold', marginTop: '10px', display: 'inline-block' },
-    dateText: { color: '#7f8c8d', fontSize: '14px', textTransform: 'capitalize' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '50px' },
-    card: { backgroundColor: '#fff', padding: '25px', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', borderBottom: '4px solid #eee' },
-    cardTitle: { fontSize: '14px', color: '#7f8c8d', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '1px' },
-    cardValue: { fontSize: '42px', fontWeight: 'bold', margin: 0 },
-    sectionTitle: { fontSize: '20px', color: '#2c3e50', marginBottom: '20px', fontWeight: '600' },
+    container: { display: 'flex', width: '100vw', minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: '"Inter", sans-serif', margin: 0, padding: 0, overflowX: 'hidden' },
+    sidebar: { width: '260px', minWidth: '260px', backgroundColor: '#0f172a', color: '#fff', display: 'flex', flexDirection: 'column', padding: '30px 20px', position: 'sticky', top: 0, height: '100vh' },
+    logoSection: { marginBottom: '40px', paddingLeft: '10px' },
+    logo: { fontSize: '24px', fontWeight: '800', letterSpacing: '-1px' },
+    nav: { display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 },
+    navItem: { background: 'none', border: 'none', color: '#94a3b8', textAlign: 'left', padding: '12px 15px', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', transition: '0.3s' },
+    navItemActive: { background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', textAlign: 'left', padding: '12px 15px', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+    logoutBtn: { padding: '12px', borderRadius: '10px', border: '1px solid #334155', background: 'transparent', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px', marginTop: 'auto' },
+
+    main: { flex: 1, padding: '40px', display: 'flex', flexDirection: 'column' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
+    welcome: { fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: 0, letterSpacing: '-1px' },
+    roleTag: { fontSize: '12px', backgroundColor: '#e2e8f0', color: '#475569', padding: '6px 14px', borderRadius: '10px', fontWeight: '700', marginTop: '10px', display: 'inline-block', textTransform: 'uppercase' },
+    dateText: { color: '#64748b', fontSize: '14px', fontWeight: '500' },
+
+    sectionTitle: { fontSize: '20px', color: '#1e293b', marginBottom: '20px', fontWeight: '700', letterSpacing: '-0.5px' },
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '25px', marginBottom: '50px' },
+    card: {
+        backgroundColor: '#fff',
+        padding: '30px',
+        borderRadius: '20px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)',
+        textAlign: 'center',
+        border: '1px solid #f1f5f9',
+        transition: 'transform 0.3s ease'
+    },
+    cardTitle: { fontSize: '13px', color: '#64748b', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800' },
+    cardValue: { fontSize: '48px', fontWeight: '900', margin: 0, letterSpacing: '-2px' },
+
     actionRow: { display: 'flex', gap: '15px', flexWrap: 'wrap' },
-    primaryAction: { padding: '15px 25px', borderRadius: '10px', border: 'none', backgroundColor: '#3498db', color: '#fff', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 6px rgba(52, 152, 219, 0.2)' },
-    secondaryAction: { padding: '15px 25px', borderRadius: '10px', border: '1px solid #dcdfe6', backgroundColor: '#fff', color: '#34495e', fontWeight: 'bold', cursor: 'pointer' },
-    maintenanceAction: { padding: '15px 25px', borderRadius: '10px', border: 'none', backgroundColor: '#e67e22', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }
+    primaryAction: {
+        padding: '16px 28px', borderRadius: '14px', border: 'none', backgroundColor: '#3b82f6', color: '#fff',
+        fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
+    },
+    secondaryAction: {
+        padding: '16px 28px', borderRadius: '14px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#1e293b',
+        fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
+    },
+    maintenanceAction: {
+        padding: '16px 28px', borderRadius: '14px', border: 'none', backgroundColor: '#1e293b', color: '#fff',
+        fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
+    }
 };
 
 export default HomePage;
