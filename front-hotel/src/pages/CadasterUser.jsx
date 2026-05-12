@@ -154,7 +154,7 @@ const CadasterUser = () => {
                         {loading ? 'Criando conta...' : 'Cadastrar'}
                     </button>
 
-                    <p style={styles.footerText} onClick={() => navigate('/login')}>
+                    <p style={styles.footerText} onClick={() => navigate('/auth/login')}>
                         Já tem conta? Entrar
                     </p>
                 </form>

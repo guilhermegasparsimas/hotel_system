@@ -14,53 +14,64 @@ const logActivity = async (idUsuario, acao, detalhes) => {
 const createRoom = async (req, res) => {
     try {
         const { room_number, tipo, preco, capacidade, descricao } = req.body;
-        const idFuncionario = req.user?.id;
+        
+        const idFuncionario = req.user?.id || req.user?.sub; 
 
         if (!room_number || !tipo || !preco) {
-            return res.status(400).json({ message: "Número, tipo e preço são obrigatórios." })
-        };
+            return res.status(400).json({ message: "Número, tipo e preço são obrigatórios." });
+        }
 
-        const [quartoExistente] = await db.query(
+        const [rows] = await db.query(
             "SELECT id FROM quartos WHERE room_number = ?",
             [room_number]
         );
 
-        if (quartoExistente.length > 0) {
-            return res.status(400).json({ message: "Este número de quarto já está cadastrado." })
+        if (rows && rows.length > 0) {
+            return res.status(400).json({ message: "Este número de quarto já está cadastrado." });
         }
-        if (descricao && descricao.length > 255) {
-            return res.status(400).json({
-                message: "A descrição é muito longa. O máximo permitido são 255 caracteres."
-            });
-        }
+        
+
         const [result] = await db.query(
-            "INSERT INTO quartos (room_number, tipo, preco, capacidade, descricao, status) VALUES (?, ?, ?, ?, ?, ?)", [room_number, tipo, preco, capacidade, descricao, 'DISPONIVEL']
+            "INSERT INTO quartos (room_number, tipo, preco, capacidade, descricao, status) VALUES (?, ?, ?, ?, ?, ?)", 
+            [room_number, tipo, preco, capacidade || 1, descricao || null, 'DISPONIVEL']
         );
-        if (result.affectedRows === 0) return res.status(400).json({ message: "Não foi possível criar o quarto." });
 
-        await logActivity(idFuncionario, "CRIAR_QUARTO", `Quarto ${room_number} cadastrado.`)
+        if (idFuncionario) {
+            try {
+                await logActivity(
+                    idFuncionario, 
+                    "CRIAR_QUARTO", 
+                    `Quarto ${room_number} cadastrado com sucesso.`
+                );
+            } catch (logError) {
+                console.error("Erro ao gerar log, mas o quarto foi criado:", logError);
+                // Não travamos a resposta se apenas o log falhar
+            }
+        }
 
-        return res.status(201).json({ message: "Quarto cadastrado com sucesso." })
+        return res.status(201).json({ 
+            message: "Quarto cadastrado com sucesso.",
+            id: result.insertId 
+        });
+
     } catch (error) {
-        console.error("Erro detalhado no servidor:", error);
+        console.error("Erro no servidor (createRoom):", error);
         return res.status(500).json({
-            message: "Erro ao criar quarto.",
+            message: "Erro interno ao criar quarto.",
             detalhes: error.message
-        })
+        });
     }
 };
-
 const getAllRooms = async (req, res) => {
     try {
-        const [listaQuartos] = await db.query("SELECT * FROM quartos");
+        const [listaQuartos] = await db.query("SELECT * FROM quartos ORDER BY room_number ASC");
 
         const totalQuartos = listaQuartos.length;
         const quartosDisponiveis = listaQuartos.filter(q => q.status === 'DISPONIVEL').length;
-        let alertaOverbooking = null;
 
-        // Alerta automático se a disponibilidade for menor que 10%
-        if (quartosDisponiveis <= totalQuartos * 0.1) {
-            alertaOverbooking = "ALERTA CRÍTICO: Capacidade máxima atingida ou próxima do limite!";
+        let alertaOverbooking = null;
+        if(totalQuartos > 0 && quartosDisponiveis <= totalQuartos * 0.1) {
+            alertaOverbooking = "Capacidade próxima do limite!";
         }
 
         return res.status(200).json({
@@ -81,19 +92,17 @@ const updateRoomStatus = async (req, res) => {
 
         const statusValidos = ["DISPONIVEL", "OCUPADO", "MANUTENCAO", "LIMPEZA"];
         if (!statusValidos.includes(novoStatus?.toUpperCase())) {
-            return res.status(400).json({ message: "Status inválido fornecido." });
+            return res.status(400).json({ message: "Status inválido." });
         }
 
-        const [resultado] = await db.query(
-            "UPDATE quartos SET status = ? WHERE id = ?",
-            [novoStatus.toUpperCase(), id]
-        );
-
-        if (resultado.affectedRows === 0) {
-            return res.status(404).json({ message: "Quarto não encontrado para atualização." });
+        const [roomData] = await db.query("SELECT room_number FROM quartos WHERE id = ?", [id]);
+        if (roomData.length === 0) {
+            return res.status(404).json({ message: "Quarto não encontrado." });
         }
 
-        await logActivity(idFuncionario, "ALTERAR_STATUS", `Status do quarto ID ${id} alterado para ${novoStatus}.`);
+        await db.query("UPDATE quartos SET status = ? WHERE id = ?", [novoStatus.toUpperCase(), id]);
+
+        await logActivity(idFuncionario, "ALTERAR_STATUS", `Quarto ${roomData[0].room_number} alterado para ${novoStatus}.`);
 
         return res.status(200).json({ message: "Status atualizado com sucesso." });
     } catch (erro) {
@@ -105,15 +114,23 @@ const deleteRoom = async (req, res) => {
     try {
         const { id } = req.params;
         const idFuncionario = req.user?.id;
+        const tipoUsuario = req.user?.tipo;
 
-        // Impedir deletar quarto ocupado (Evitar erros no sistema)
-        const [room] = await db.query("SELECT status FROM quartos WHERE id = ?", [id]);
-        if (room.length > 0 && room[0].status === 'OCUPADO') {
+        if (tipoUsuario !== 'GERENTE') {
+            return res.status(403).json({ message: "Apenas gerentes podem deletar quartos." });
+        }
+
+        const [room] = await db.query("SELECT room_number, status FROM quartos WHERE id = ?", [id]);
+        if (room.length === 0) {
+            return res.status(404).json({ message: "Quarto não encontrado." });
+        }
+
+        if (room[0].status === 'OCUPADO') {
             return res.status(400).json({ message: "Não é possível remover um quarto ocupado." });
         }
 
         await db.query("DELETE FROM quartos WHERE id = ?", [id]);
-        await logActivity(idFuncionario, "DELETE_ROOM", `Quarto ID ${id} removido.`);
+        await logActivity(idFuncionario, "DELETE_ROOM", `Quarto ${room[0].room_number} removido do sistema.`);
 
         return res.status(200).json({ message: "Quarto removido com sucesso." });
     } catch (error) {
@@ -121,4 +138,20 @@ const deleteRoom = async (req, res) => {
     }
 };
 
-export { createRoom, getAllRooms, updateRoomStatus, deleteRoom };
+ const getStats = async (req, res) => {
+    try {
+        const [rows] = await db.execute(`
+            SELECT 
+                 CAST(IFNULL(SUM(CASE WHEN status = 'DISPONIVEL' THEN 1 ELSE 0 END), 0) AS UNSIGNED) as disponiveis,
+                 CAST(IFNULL(SUM(CASE WHEN status = 'OCUPADO' THEN 1 ELSE 0 END), 0) AS UNSIGNED) as ocupados,
+                 CAST(IFNULL(SUM(CASE WHEN status = 'LIMPEZA' THEN 1 ELSE 0 END), 0) AS UNSIGNED) as limpeza,
+                CAST(IFNULL(SUM(CASE WHEN status = 'MANUTENCAO' THEN 1 ELSE 0 END), 0) AS UNSIGNED) as manutencao
+            FROM quartos
+        `);
+        res.json(rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: "Erro ao buscar estatísticas" });
+    }
+};
+
+export { createRoom, getAllRooms, updateRoomStatus, deleteRoom, getStats };

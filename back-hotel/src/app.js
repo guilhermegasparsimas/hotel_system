@@ -15,6 +15,6 @@ app.get('/', (req, res) => {
 
 app.use(userRouter);
 app.use('/auth', authRouter);
-app.use(roomRouter);
+app.use('/quartos', roomRouter);
 
 export { app };

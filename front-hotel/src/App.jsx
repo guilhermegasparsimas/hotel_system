@@ -1,9 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import CadasterUser from './pages/CadasterUser';
-import HomePage from './pages/HomePage';
-import MinhasReservas from './components/Reserva/MinhasReservas';
-import ListaQuartos from './components/Quarto/ListarQuartos';
-import LoginUser from './pages/LoginPage';
+import HomePage from './pages/HomePage.jsx';
+// import MinhasReservas from './components/Reserva/MinhasReservas.jsx';
+import LoginUser from './pages/LoginPage.jsx';
+import RoomPage from './pages/RoomPage.jsx';
+import './App.css';
 
 function App() {
   return (
@@ -14,9 +15,8 @@ function App() {
       <Route path="/cadaster" element={<CadasterUser />} />
       <Route path="/home" element={<HomePage />} />
 
-      <Route path="/minhas-reservas" element={<MinhasReservas />} />
-      <Route path="/quartos" element={<ListaQuartos />} />
-      {/* <Route path="/quartos" element={<RoomsPage />} /> */}
+      {/* <Route path="/minhas-reservas" element={<MinhasReservas />} /> */}
+      <Route path="/quartos" element={<RoomPage />} />
     </Routes>
   );
 }

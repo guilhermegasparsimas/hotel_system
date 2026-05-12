@@ -12,29 +12,42 @@ const ModalNovoQuarto = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const getAuthHeader = () => {
+        const token = localStorage.getItem('token');
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!formData.room_number || !formData.preco) {
+            alert("⚠️ Por favor, preencha o número do quarto e o preço.");
+            return;
+        }
+
+        const headers = getAuthHeader();
+
+        if (!headers.Authorization) {
+            alert("❌ Sessão expirada. Por favor, faça login novamente.");
+            return;
+        }
+
         try {
-            const token = localStorage.getItem('token');
-            
-            // Garantimos que preco e capacidade sejam números antes de enviar
-            const dadosParaEnviar = {
-                ...formData,
-                preco: parseFloat(formData.preco),
-                capacidade: parseInt(formData.capacidade)
-            };
+            const response = await axios.post('http://localhost:7070/quartos', formData, { headers });
 
-            const response = await axios.post('http://localhost:7070/quartos', dadosParaEnviar, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            alert(response.data.message || "✅ Quarto criado com sucesso!");
 
-            alert(response.data.message);
-            // Reseta o formulário
             setFormData({ room_number: '', tipo: 'SIMPLES', preco: '', capacidade: 1, descricao: '' });
-            onClose(); 
+            onClose();
         } catch (error) {
             console.error("Erro ao cadastrar quarto:", error);
-            alert(error.response?.data?.message || "Erro ao conectar com o servidor.");
+            const msgErro = error.response?.data?.message || "Erro ao conectar com o servidor.";
+            alert(`❌ Erro: ${msgErro}`);
         }
     };
 
@@ -50,25 +63,27 @@ const ModalNovoQuarto = ({ isOpen, onClose }) => {
                     <div style={styles.row}>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Número</label>
-                            <input 
-                                type="text" 
+                            <input
+                                name="room_number"
+                                type="text"
                                 required
                                 placeholder="Ex: 101"
                                 style={styles.input}
                                 value={formData.room_number}
-                                onChange={(e) => setFormData({...formData, room_number: e.target.value})}
+                                onChange={handleChange}
                             />
                         </div>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Preço Diária (R$)</label>
-                            <input 
-                                type="number" 
+                            <input
+                                name="preco"
+                                type="number"
                                 step="0.01"
                                 required
                                 placeholder="0.00"
                                 style={styles.input}
                                 value={formData.preco}
-                                onChange={(e) => setFormData({...formData, preco: e.target.value})}
+                                onChange={handleChange}
                             />
                         </div>
                     </div>
@@ -76,35 +91,40 @@ const ModalNovoQuarto = ({ isOpen, onClose }) => {
                     <div style={styles.row}>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Tipo</label>
-                            <select 
+                            <select
+                                name="tipo"
                                 style={styles.input}
                                 value={formData.tipo}
-                                onChange={(e) => setFormData({...formData, tipo: e.target.value})}
+                                onChange={handleChange}
                             >
                                 <option value="SIMPLES">Simples</option>
                                 <option value="DUPLO">Duplo</option>
                                 <option value="LUXO">Luxo</option>
+                                <option value="PRESIDENCIAL">Presidencial</option>
                             </select>
                         </div>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Capacidade</label>
-                            <input 
-                                type="number" 
+                            <input
+                                name="capacidade"
+                                type="number"
                                 min="1"
                                 style={styles.input}
                                 value={formData.capacidade}
-                                onChange={(e) => setFormData({...formData, capacidade: e.target.value})}
+                                onChange={handleChange}
                             />
                         </div>
                     </div>
 
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Descrição (Máx 255 carac.)</label>
-                        <textarea 
+                        <textarea
+                            name="descricao"
                             rows="3"
                             style={styles.textarea}
                             value={formData.descricao}
-                            onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                            onChange={handleChange}
+                            placeholder="Detalhes adicionais sobre o quarto..."
                         ></textarea>
                     </div>
 
@@ -128,8 +148,8 @@ const styles = {
     row: { display: 'flex', gap: '15px' },
     inputGroup: { display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 },
     label: { fontSize: '14px', fontWeight: 'bold', color: '#34495e' },
-    input: { padding: '10px', borderRadius: '8px', border: '1px solid #dcdfe6', fontSize: '15px' },
-    textarea: { padding: '10px', borderRadius: '8px', border: '1px solid #dcdfe6', fontSize: '15px', resize: 'none' },
+    input: { padding: '10px', borderRadius: '8px', border: '1px solid #dcdfe6', fontSize: '15px', backgroundColor: '#ffffff', color: '#2c3e50' },
+    textarea: { padding: '10px', borderRadius: '8px', border: '1px solid #dcdfe6', fontSize: '15px', resize: 'none', backgroundColor: '#ffffff', color: '#2c3e50' },
     footer: { display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' },
     cancelBtn: { padding: '10px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#ecf0f1', color: '#7f8c8d', cursor: 'pointer' },
     confirmBtn: { padding: '10px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#3498db', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }

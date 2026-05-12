@@ -1,0 +1,15 @@
+const fetchStats = async () => {
+    const token = localStorage.getItem('token'); // Pega o token atualizado
+    try {
+        const response = await axios.get('http://localhost:7070/quartos/stats', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        setStats(response.data);
+    } catch (error) {
+        if (error.response?.status === 401) {
+            // Se der 401, o token não presta mais. 
+            // É melhor deslogar o usuário do que ficar tentando.
+            console.error("Token inválido ou expirado.");
+        }
+    }
+};
