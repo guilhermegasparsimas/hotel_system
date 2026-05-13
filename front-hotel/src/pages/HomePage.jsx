@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ModalNovoQuarto from '../components/Quarto/ModalNovoQuarto.jsx';
 import ModalNovoHospede from '../components/Hospede/ModalNovoHospede.jsx';
+import Sidebar from '../components/Sidebar/Sidebar.jsx';
 
 const HomePage = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [stats, setStats] = useState({
         disponiveis: 0,
         ocupados: 0,
@@ -54,24 +56,14 @@ const HomePage = () => {
 
     return (
         <div style={styles.container}>
-            <aside style={styles.sidebar}>
-                <div style={styles.logoSection}>
-                    <h2 style={styles.logo}>Hotel<span style={{ color: '#3498db' }}>Gestão</span></h2>
-                </div>
-                <nav style={styles.nav}>
-                    <button style={styles.navItemActive} onClick={() => navigate('/home')}>🏠 Dashboard</button>
-                    <button style={styles.navItem} onClick={() => navigate('/quartos')}>🛏️ Mapa de Quartos</button>
-                    {isStaff && (
-                        <>
-                            <button style={styles.navItem} onClick={() => navigate('/hospedes')}>👥 Hóspedes</button>
-                            <button style={styles.navItem} onClick={() => navigate('/financeiro')}>💰 Financeiro</button>
-                        </>
-                    )}
-                </nav>
-                <button style={styles.logoutBtn} onClick={handleLogout}>Sair da Conta</button>
-            </aside>
+            <Sidebar onToggle={(state) => setSidebarOpen(state)} />
 
-            <main style={styles.main}>
+            <main style={{
+                ...styles.main,
+                // O segredo está em ajustar o padding e a largura baseada na sidebar
+                paddingLeft: sidebarOpen ? '300px' : '80px', 
+                width: '100%',
+            }}>
                 <header style={styles.header}>
                     <div>
                         <h1 style={styles.welcome}>Olá, {user.nome}! 👋</h1>
@@ -89,6 +81,8 @@ const HomePage = () => {
                 </header>
 
                 <h2 style={styles.sectionTitle}>Status Operacional</h2>
+                
+                {/* O Grid agora usa auto-fill para preencher o espaço suavemente */}
                 <section style={styles.grid}>
                     <div style={{ ...styles.card, borderTop: '4px solid #10b981' }}>
                         <h3 style={styles.cardTitle}>Disponíveis</h3>
@@ -133,46 +127,62 @@ const HomePage = () => {
 };
 
 const styles = {
-    container: { display: 'flex', width: '100vw', minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: '"Inter", sans-serif', margin: 0, padding: 0, overflowX: 'hidden' },
-    sidebar: { width: '260px', minWidth: '260px', backgroundColor: '#0f172a', color: '#fff', display: 'flex', flexDirection: 'column', padding: '30px 20px', position: 'sticky', top: 0, height: '100vh' },
-    logoSection: { marginBottom: '40px', paddingLeft: '10px' },
-    logo: { fontSize: '24px', fontWeight: '800', letterSpacing: '-1px' },
-    nav: { display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 },
-    navItem: { background: 'none', border: 'none', color: '#94a3b8', textAlign: 'left', padding: '12px 15px', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', transition: '0.3s' },
-    navItemActive: { background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', textAlign: 'left', padding: '12px 15px', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
-    logoutBtn: { padding: '12px', borderRadius: '10px', border: '1px solid #334155', background: 'transparent', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px', marginTop: 'auto' },
-
-    main: { flex: 1, padding: '40px', display: 'flex', flexDirection: 'column' },
+    container: { 
+        display: 'flex', 
+        width: '100%', 
+        minHeight: '100vh', 
+        backgroundColor: '#f8fafc', 
+        fontFamily: '"Inter", sans-serif',
+        overflowX: 'hidden' 
+    },
+    main: { 
+        flex: 1, 
+        paddingTop: '40px',
+        paddingRight: '40px',
+        paddingBottom: '40px',
+        display: 'flex', 
+        flexDirection: 'column', 
+        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)', 
+        minHeight: '100vh',
+        boxSizing: 'border-box'
+    },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
     welcome: { fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: 0, letterSpacing: '-1px' },
-    roleTag: { fontSize: '12px', backgroundColor: '#e2e8f0', color: '#475569', padding: '6px 14px', borderRadius: '10px', fontWeight: '700', marginTop: '10px', display: 'inline-block', textTransform: 'uppercase' },
+    roleTag: { fontSize: '11px', backgroundColor: '#e2e8f0', color: '#475569', padding: '6px 14px', borderRadius: '8px', fontWeight: '800', marginTop: '10px', display: 'inline-block', textTransform: 'uppercase' },
     dateText: { color: '#64748b', fontSize: '14px', fontWeight: '500' },
-
     sectionTitle: { fontSize: '20px', color: '#1e293b', marginBottom: '20px', fontWeight: '700', letterSpacing: '-0.5px' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '25px', marginBottom: '50px' },
+    
+    grid: { 
+        display: 'grid', 
+        // Usando minmax flexível para evitar quebra feia
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+        gap: '25px', 
+        marginBottom: '50px' 
+    },
+    
     card: {
         backgroundColor: '#fff',
         padding: '30px',
-        borderRadius: '20px',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)',
+        borderRadius: '24px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         textAlign: 'center',
         border: '1px solid #f1f5f9',
-        transition: 'transform 0.3s ease'
+        transition: 'all 0.3s ease'
     },
-    cardTitle: { fontSize: '13px', color: '#64748b', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800' },
+    cardTitle: { fontSize: '12px', color: '#64748b', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800' },
     cardValue: { fontSize: '48px', fontWeight: '900', margin: 0, letterSpacing: '-2px' },
-
+    
     actionRow: { display: 'flex', gap: '15px', flexWrap: 'wrap' },
     primaryAction: {
-        padding: '16px 28px', borderRadius: '14px', border: 'none', backgroundColor: '#3b82f6', color: '#fff',
-        fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
+        padding: '16px 28px', borderRadius: '16px', border: 'none', backgroundColor: '#3b82f6', color: '#fff',
+        fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
     },
     secondaryAction: {
-        padding: '16px 28px', borderRadius: '14px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#1e293b',
+        padding: '16px 28px', borderRadius: '16px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#1e293b',
         fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
     },
     maintenanceAction: {
-        padding: '16px 28px', borderRadius: '14px', border: 'none', backgroundColor: '#1e293b', color: '#fff',
+        padding: '16px 28px', borderRadius: '16px', border: 'none', backgroundColor: '#0f172a', color: '#fff',
         fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
     }
 };

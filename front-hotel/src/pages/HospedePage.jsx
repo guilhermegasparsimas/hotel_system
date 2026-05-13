@@ -63,6 +63,7 @@ const HospedePage = () => {
         <div style={styles.container}>
             {/* SIDEBAR PADRONIZADA */}
             <aside style={styles.sidebar}>
+                
                 <div style={styles.logoSection}>
                     <h2 style={styles.logo}>Hotel<span style={{color: '#3498db'}}>Gestão</span></h2>
                 </div>
@@ -70,9 +71,10 @@ const HospedePage = () => {
                     <button style={styles.navItem} onClick={() => navigate('/home')}>🏠 Dashboard</button>
                     <button style={styles.navItem} onClick={() => navigate('/quartos')}>🛏️ Mapa de Quartos</button>
                     <button style={{ ...styles.navItem, ...styles.navItemActive }} onClick={() => navigate('/hospedes')}>👥 Hóspedes</button>
+                    <button style={styles.navItem} onClick={() => navigate('/reservas')}>📅 Reservas</button>
                     {isGerente && <button style={styles.navItem} onClick={() => navigate('/usuarios')}>👤 Equipe</button>}
                 </nav>
-                <button style={styles.logoutBtn} onClick={() => { localStorage.clear(); navigate('/login'); }}>Sair</button>
+                <button style={styles.logoutBtn} onClick={() => { localStorage.clear(); navigate('/auth/login'); }}>Sair</button>
             </aside>
 
             {/* CONTEÚDO PRINCIPAL */}
@@ -165,7 +167,7 @@ const styles = {
     nav: { display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 },
     navItem: { background: 'none', border: 'none', color: '#94a3b8', textAlign: 'left', padding: '12px 15px', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', transition: '0.3s' },
     navItemActive: { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff', fontWeight: '600' },
-    logoutBtn: { padding: '12px', borderRadius: '10px', border: '1px solid #334155', background: 'transparent', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px', marginTop: 'auto' },
+    logoutBtn: { padding: '12px', borderRadius: '10px', border: '1px solid #ff00009a', background: 'transparent', color: '#ff00009a', cursor: 'pointer', fontSize: '14px', marginTop: 'auto' },
 
     main: { flex: 1, padding: '40px', display: 'flex', flexDirection: 'column' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
@@ -174,7 +176,7 @@ const styles = {
     addBtn: { backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' },
 
     searchBarContainer: { marginBottom: '25px' },
-    searchInput: { width: '100%', maxWidth: '400px', padding: '12px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '14px' },
+    searchInput: { width: '100%', maxWidth: '400px', padding: '12px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '14px',  backgroundColor: '#ffffff', color: '#2c3e50' },
 
     tableContainer: { backgroundColor: '#fff', borderRadius: '20px', border: '1px solid #f1f5f9', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)', overflow: 'hidden' },
     table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },

@@ -146,21 +146,118 @@ const LoginUser = () => {
 };
 
 const styles = {
-    page: { height: '100vh', display: 'flex', fontFamily: 'Inter, system-ui, sans-serif', backgroundColor: '#f5f7fb' },
-    left: { flex: 1, background: 'linear-gradient(135deg, #2c3e50, #4a6fa5)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px', color: '#fff' },
-    brand: { fontSize: '48px', fontWeight: '800', marginBottom: '15px', letterSpacing: '-1px' },
-    subtitle: { fontSize: '19px', opacity: 0.8, maxWidth: '350px', lineHeight: '1.5' },
-    right: { flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' },
-    card: { width: '380px', backgroundColor: '#fff', padding: '40px', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '20px' },
-    title: { textAlign: 'left', color: '#1a1a1a', fontSize: '24px', fontWeight: '700', marginBottom: '5px' },
-    messageBox: { padding: '12px', borderRadius: '8px', fontSize: '14px', textAlign: 'center', transition: 'all 0.3s ease' },
+    page: { 
+        height: '100vh', 
+        display: 'flex', 
+        fontFamily: '"Inter", sans-serif', 
+        backgroundColor: '#fff' 
+    },
+    left: { 
+        flex: 1.2, 
+        backgroundColor: '#0f172a', 
+        position: 'relative',
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center', 
+        padding: '80px',
+        overflow: 'hidden',
+        // Quando quiser colocar imagem, use background-image aqui:
+        // backgroundImage: 'url("sua-imagem.jpg")',
+        // backgroundSize: 'cover'
+    },
+    overlay: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.7) 100%)',
+        zIndex: 1
+    },
+    contentLeft: { position: 'relative', zIndex: 2 },
+    logoBadge: {
+        width: '50px',
+        height: '50px',
+        backgroundColor: '#3b82f6',
+        borderRadius: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '24px',
+        fontWeight: '900',
+        color: '#fff',
+        marginBottom: '20px'
+    },
+    brand: { 
+        fontSize: '42px', 
+        fontWeight: '800', 
+        color: '#fff',
+        marginBottom: '15px', 
+        letterSpacing: '-1.5px' 
+    },
+    subtitle: { 
+        fontSize: '18px', 
+        color: '#94a3b8', 
+        maxWidth: '400px', 
+        lineHeight: '1.6' 
+    },
+    right: { 
+        flex: 1, 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: '#f8fafc' 
+    },
+    card: { 
+        width: '100%',
+        maxWidth: '400px', 
+        backgroundColor: '#fff', 
+        padding: '50px', 
+        borderRadius: '24px', 
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)',
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '25px' 
+    },
+    headerForm: { textAlign: 'left' },
+    title: { 
+        color: '#1e293b', 
+        fontSize: '28px', 
+        fontWeight: '800', 
+        margin: '0 0 8px 0',
+        letterSpacing: '-0.5px'
+    },
+    desc: { color: '#64748b', fontSize: '15px', margin: 0 },
+    form: { display: 'flex', flexDirection: 'column', gap: '20px' },
+    messageBox: { 
+        padding: '14px', 
+        borderRadius: '12px', 
+        fontSize: '14px', 
+        fontWeight: '500',
+        textAlign: 'center' 
+    },
     inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
-    label: { fontSize: '13px', fontWeight: '600', color: '#4b5563' },
-    input: { padding: '12px 16px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '15px', outline: 'none', transition: 'border-color 0.2s', width: '100%', boxSizing: 'border-box' },
-    button: { padding: '14px', borderRadius: '8px', border: 'none', color: '#fff', fontWeight: '600', fontSize: '16px', transition: '0.2s', marginTop: '10px' },
-    footerContainer: { marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' },
-    footerText: { fontSize: '13px', color: '#6b7280', cursor: 'pointer' },
-    link: { color: '#4a6fa5', fontWeight: 'bold' }
+    label: { fontSize: '13px', fontWeight: '700', color: '#475569', marginLeft: '4px' },
+    input: { 
+        padding: '14px 18px', 
+        borderRadius: '12px', 
+        border: '1px solid #e2e8f0', 
+        fontSize: '15px', 
+        outline: 'none', 
+        transition: '0.2s',
+        backgroundColor: '#f1f5f9' 
+    },
+    button: { 
+        padding: '16px', 
+        borderRadius: '12px', 
+        border: 'none', 
+        color: '#fff', 
+        fontWeight: '700', 
+        fontSize: '16px', 
+        transition: 'all 0.3s ease',
+        marginTop: '10px',
+        boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)'
+    },
+    footerContainer: { textAlign: 'center' },
+    footerText: { fontSize: '14px', color: '#64748b' },
+    link: { color: '#3b82f6', fontWeight: '700', cursor: 'pointer' }
 };
 
 export default LoginUser;

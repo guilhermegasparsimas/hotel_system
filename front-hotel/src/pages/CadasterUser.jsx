@@ -150,13 +150,22 @@ const CadasterUser = () => {
                         <option value="GERENTE">Gerente</option>
                     </select>
 
-                    <button style={styles.button} type="submit" disabled={loading}>
+                       <button 
+                        style={{
+                            ...styles.button, 
+                            backgroundColor: loading ? '#a0b3d1' : '#4a6fa5',
+                            cursor: loading ? 'not-allowed' : 'pointer'
+                        }} 
+                        type="submit" 
+                        disabled={loading}
+                    >
                         {loading ? 'Criando conta...' : 'Cadastrar'}
                     </button>
+                    
 
-                    <p style={styles.footerText} onClick={() => navigate('/auth/login')}>
-                        Já tem conta? Entrar
-                    </p>
+                     <p style={styles.footerText} onClick={() => navigate('/auth/login')}>
+                            Já possui conta? <span style={styles.link}>Solicitar login</span>
+                        </p>
                 </form>
             </div>
         </div>
@@ -164,101 +173,56 @@ const CadasterUser = () => {
 };
 
 const styles = {
-    page: {
-        height: '100vh',
-        display: 'flex',
-        fontFamily: 'Segoe UI, sans-serif'
+    page: { height: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif', backgroundColor: '#fff' },
+    left: { 
+        flex: 1.2, 
+        backgroundColor: '#0f172a', 
+        position: 'relative', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center', 
+        padding: '80px', 
+        overflow: 'hidden' 
     },
-
-    left: {
-        flex: 1,
-        background: 'linear-gradient(135deg, #4a6fa5, #6c8fc7)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        padding: '60px',
-        color: '#fff'
+    overlay: {
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.7) 100%)',
+        zIndex: 1
     },
-
-    brand: {
-        fontSize: '42px',
-        marginBottom: '10px'
+    contentLeft: { position: 'relative', zIndex: 2 },
+    logoBadge: {
+        width: '50px', height: '50px', backgroundColor: '#3b82f6', borderRadius: '12px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: '900', color: '#fff', marginBottom: '20px'
     },
-
-    subtitle: {
-        fontSize: '18px',
-        opacity: 0.9,
-        maxWidth: '320px'
+    brand: { fontSize: '42px', fontWeight: '800', color: '#fff', marginBottom: '15px', letterSpacing: '-1.5px' },
+    subtitle: { fontSize: '18px', color: '#94a3b8', maxWidth: '400px', lineHeight: '1.6' },
+    
+    right: { flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
+    card: { 
+        width: '100%', maxWidth: '420px', backgroundColor: '#fff', padding: '40px', borderRadius: '24px', 
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', gap: '20px' 
     },
-
-    right: {
-        flex: 1,
-        backgroundColor: '#f5f7fb',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
+    headerForm: { textAlign: 'left' },
+    title: { color: '#1e293b', fontSize: '28px', fontWeight: '800', margin: '0 0 5px 0', letterSpacing: '-0.5px' },
+    desc: { color: '#64748b', fontSize: '14px', margin: 0 },
+    
+    form: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    messageBox: { padding: '12px', borderRadius: '12px', fontSize: '14px', fontWeight: '500', textAlign: 'center' },
+    
+    inputGroup: { display: 'flex', flexDirection: 'column', gap: '6px' },
+    label: { fontSize: '13px', fontWeight: '700', color: '#475569', marginLeft: '4px' },
+    input: { 
+        padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '14px', 
+        outline: 'none', transition: '0.2s', backgroundColor: '#f1f5f9', color: '#1e293b'
     },
-
-    card: {
-        width: '360px',
-        backgroundColor: '#fff',
-        padding: '35px',
-        borderRadius: '14px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '14px'
+    
+    button: { 
+        padding: '14px', borderRadius: '12px', border: 'none', color: '#fff', fontWeight: '700', 
+        fontSize: '15px', transition: 'all 0.3s ease', marginTop: '10px', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)'
     },
-
-    title: {
-        textAlign: 'center',
-        color: '#2c3e50'
-    },
-
-    input: {
-        padding: '12px',
-        borderRadius: '8px',
-        border: '1px solid #dcdfe6',
-        backgroundColor: '#ffffff', // Essencial para não ficar preto
-        color: '#2c3e50',           // Cor do texto
-        fontSize: '14px',
-        outline: 'none',
-        width: '100%',              // Garante que ocupe o card
-        boxSizing: 'border-box'     // Evita que o padding "estoure" a largura
-    },
-
-    successBox: {
-        backgroundColor: '#e8f5e9',
-        color: '#2e7d32',
-        padding: '10px',
-        borderRadius: '8px',
-        fontSize: '13px'
-    },
-
-    button: {
-        padding: '12px',
-        borderRadius: '8px',
-        border: 'none',
-        backgroundColor: '#4a6fa5',
-        color: '#fff',
-        fontWeight: 'bold',
-        cursor: 'pointer'
-    },
-
-    errorBox: {
-        backgroundColor: '#fdecea',
-        color: '#c62828',
-        padding: '10px',
-        borderRadius: '8px',
-        fontSize: '13px'
-    },
-
-    footerText: {
-        textAlign: 'center',
-        fontSize: '12px',
-        color: '#7a7a7a',
-        cursor: 'pointer'
-    }
+    footerContainer: { textAlign: 'center', marginTop: '10px' },
+    footerText: { fontSize: '14px', color: '#64748b' },
+    link: { color: '#3b82f6', fontWeight: '700', cursor: 'pointer' }
 };
 
 export default CadasterUser;

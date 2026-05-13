@@ -1,31 +1,62 @@
 import React, { useState, useEffect } from 'react';
+import { data } from 'react-router-dom';
 
-const ModalReserva = ({ isOpen, onClose, userId }) => {
+const ModalReserva = ({ isOpen, onClose, funcionarioId }) => {
     const [quartos, setQuartos] = useState([]);
+    const [hospedes, setHospedes] = useState([]); 
     const [loading, setLoading] = useState(false);
+    
     const [reserva, setReserva] = useState({
         quartoId: '',
-        dataInicio: '',
-        dataFim: ''
+        hospedeId: '',
+        dataCheckin: '',
+        dataCheckout: '',
+        valorTotal: 0
     });
 
     useEffect(() => {
         if (isOpen) {
-            const buscarQuartos = async () => {
+            const carregarDados = async () => {
                 try {
-                    const response = await fetch('http://localhost:7070/quartos/disponiveis');
-                    const data = await response.json();
-                    setQuartos(data);
+                    const [resQuartos, resHospedes] = await Promise.all([
+                        fetch('http://localhost:7070/quartos/disponiveis'),
+                        fetch('http://localhost:7070/hospedes')
+                    ]);
+                    
+                    const dadosQuartos = await resQuartos.json();
+                    const dadosHospedes = await resHospedes.json();
+                    
+                    setQuartos(dadosQuartos);
+                    setHospedes(dadosHospedes.dados || dadosHospedes); 
                 } catch (error) {
-                    console.error("Erro ao buscar quartos:", error);
+                    console.error("Erro ao buscar dados para reserva:", error);
                 }
             };
-            buscarQuartos();
+            carregarDados();
         }
     }, [isOpen]);
 
+    useEffect(() => {
+        if (reserva.dataCheckin && reserva.dataCheckout && reserva.quartoId) {
+            const quarto = quartos.find(q => q.id === parseInt(reserva.quartoId));
+            if (quarto) {
+                const inicio = new Date(reserva.dataCheckin);
+                const fim = new Date(reserva.dataCheckout);
+                const dias = Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24));
+                
+                if (dias > 0) {
+                    setReserva(prev => ({ ...prev, valorTotal: dias * (quarto.preco || quarto.preco_diaria) }));
+                }
+            }
+        }
+    }, [reserva.dataCheckin, reserva.dataCheckout, reserva.quartoId, quartos]);
+
     const handleConfirmar = async (e) => {
         e.preventDefault();
+        if (new Date(reserva.dataCheckin) >= new Date(reserva.dataCheckout)) {
+            return alert("A data de saída deve ser maior que a de entrada.");
+        }
+
         setLoading(true);
         const token = localStorage.getItem('token');
 
@@ -37,22 +68,26 @@ const ModalReserva = ({ isOpen, onClose, userId }) => {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    usuarioId: userId,
-                    quartoId: reserva.quartoId,
-                    data_checkin: reserva.dataInicio,
-                    data_checkout: reserva.dataFim
+                    quarto_id: reserva.quartoId,
+                    hospede_id: reserva.hospedeId,
+                    funcionario_id: funcionarioId, 
+                    data_checkin: reserva.dataCheckin,
+                    data_checkout: reserva.dataCheckout,
+                    valor_total: reserva.valorTotal,
+                    status_reserva: 'CONFIRMADA',
+                    status_pagamento: 'PENDENTE'
                 })
             });
 
             if (response.ok) {
-                alert("Reserva confirmada!");
+                alert("Reserva registrada com sucesso!");
                 onClose();
             } else {
                 const err = await response.json();
                 alert(err.message || "Erro na reserva");
             }
         } catch (error) {
-            alert("Erro de conexão");
+            alert("Erro de conexão com o servidor");
         } finally {
             setLoading(false);
         }
@@ -70,16 +105,32 @@ const ModalReserva = ({ isOpen, onClose, userId }) => {
                 
                 <form onSubmit={handleConfirmar} style={styles.form}>
                     <div style={styles.inputGroup}>
-                        <label style={styles.label}>Quarto:</label>
+                        <label style={styles.label}>Hóspede:</label>
                         <select 
                             style={styles.input} 
                             required
+                            value={reserva.hospedeId}
+                            onChange={(e) => setReserva({...reserva, hospedeId: e.target.value})}
+                        >
+                            <option value="">Selecione o hóspede...</option>
+                            {hospedes.map(h => (
+                                <option key={h.id} value={h.id}>{h.nome} - {h.cpf}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div style={styles.inputGroup}>
+                        <label style={styles.label}>Quarto Disponível:</label>
+                        <select 
+                            style={styles.input} 
+                            required
+                            value={reserva.quartoId}
                             onChange={(e) => setReserva({...reserva, quartoId: e.target.value})}
                         >
-                            <option value="">Selecione...</option>
+                            <option value="">Selecione o quarto...</option>
                             {quartos.map(q => (
                                 <option key={q.id} value={q.id}>
-                                    Quarto {q.numero} - {q.tipo} (R$ {q.preco_diaria})
+                                    Quarto {q.room_number || q.numero} - {q.tipo} (R$ {q.preco || q.preco_diaria})
                                 </option>
                             ))}
                         </select>
@@ -87,27 +138,32 @@ const ModalReserva = ({ isOpen, onClose, userId }) => {
 
                     <div style={styles.row}>
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Check-in:</label>
+                            <label style={styles.label}>Data Entrada:</label>
                             <input 
-                                type="date" 
+                                type="datetime-local" 
                                 style={styles.input} 
                                 required 
-                                onChange={(e) => setReserva({...reserva, dataInicio: e.target.value})} 
+                                onChange={(e) => setReserva({...reserva, dataCheckin: e.target.value})} 
                             />
                         </div>
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Check-out:</label>
+                            <label style={styles.label}>Data Saída:</label>
                             <input 
-                                type="date" 
+                                type="datetime-local" 
                                 style={styles.input} 
                                 required 
-                                onChange={(e) => setReserva({...reserva, dataFim: e.target.value})} 
+                                onChange={(e) => setReserva({...reserva, dataCheckout: e.target.value})} 
                             />
                         </div>
                     </div>
 
+                    <div style={styles.totalBox}>
+                        <span>Valor Total:</span>
+                        <strong>R$ {reserva.valorTotal.toFixed(2)}</strong>
+                    </div>
+
                     <button type="submit" style={styles.confirmBtn} disabled={loading}>
-                        {loading ? "Processando..." : "Confirmar Reserva"}
+                        {loading ? "Processando..." : "Finalizar Reserva"}
                     </button>
                 </form>
             </div>
@@ -116,39 +172,18 @@ const ModalReserva = ({ isOpen, onClose, userId }) => {
 };
 
 const styles = {
-    overlay: { 
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-        backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', 
-        justifyContent: 'center', alignItems: 'center', zIndex: 2000 
-    },
-    card: { 
-        backgroundColor: '#fff', width: '400px', padding: '30px', 
-        borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' 
-    },
-    header: { 
-        display: 'flex', justifyContent: 'space-between', 
-        alignItems: 'center', marginBottom: '25px' 
-    },
-    title: { margin: 0, color: '#2c3e50', fontSize: '20px' },
-    closeBtn: { 
-        background: 'none', border: 'none', fontSize: '28px', 
-        cursor: 'pointer', color: '#999' 
-    },
-    form: { display: 'flex', flexDirection: 'column', gap: '20px' },
-    inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 },
-    label: { fontSize: '13px', fontWeight: '600', color: '#4a6fa5' },
-    input: { 
-        padding: '12px', borderRadius: '8px', border: '1px solid #dcdfe6', 
-        backgroundColor: '#ffffff', // Força fundo branco
-        color: '#333',              // Força texto escuro
-        fontSize: '14px', outline: 'none' 
-    },
+    overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, backdropFilter: 'blur(4px)' },
+    card: { backgroundColor: '#fff', width: '450px', padding: '30px', borderRadius: '20px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
+    title: { margin: 0, color: '#1e293b', fontSize: '22px', fontWeight: '800' },
+    closeBtn: { background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer', color: '#94a3b8' },
+    form: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    inputGroup: { display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 },
+    label: { fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' },
+    input: { padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#1e293b', fontSize: '14px', outline: 'none' },
     row: { display: 'flex', gap: '15px' },
-    confirmBtn: { 
-        padding: '14px', backgroundColor: '#2ecc71', color: '#fff', 
-        border: 'none', borderRadius: '8px', fontWeight: 'bold', 
-        cursor: 'pointer', fontSize: '16px', marginTop: '10px' 
-    }
+    totalBox: { backgroundColor: '#f1f5f9', padding: '15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b', marginTop: '5px' },
+    confirmBtn: { padding: '14px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px', marginTop: '10px', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.5)' }
 };
 
 export default ModalReserva;

@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage.jsx';
 import LoginUser from './pages/LoginPage.jsx';
 import HospedePage from './pages/HospedePage.jsx';
 import RoomPage from './pages/RoomPage.jsx';
+import BookingPage from './pages/BookingPage.jsx';
 import './App.css';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
       <Route path="/home" element={<HomePage />} />
       <Route path="/quartos" element={<RoomPage />} />
       <Route path="/hospedes" element={<HospedePage />} />
+      <Route path="/reservas" element={<BookingPage />} />
 
       {/* <Route path="/minhas-reservas" element={<MinhasReservas />} /> */}
 
