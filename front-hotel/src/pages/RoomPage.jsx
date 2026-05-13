@@ -87,7 +87,6 @@ const RoomPage = () => {
 
             <main style={{
                 ...styles.main,
-                // AJUSTE DINÂMICO: Sincronizado com a Sidebar
                 paddingLeft: sidebarOpen ? '300px' : '80px', 
             }}>
                 <header style={styles.header}>

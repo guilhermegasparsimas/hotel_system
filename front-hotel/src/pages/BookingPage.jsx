@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ModalReserva from '../components/Reserva/ModalReserva.jsx';
+import Sidebar from '../components/Sidebar/Sidebar.jsx';
 
 const BookingPage = () => {
     const [reservas, setReservas] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalBookingOpen, setIsModalBookingOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [filtroStatus, setFiltroStatus] = useState('TODAS');
     const [loading, setLoading] = useState(true);
 
@@ -56,12 +58,20 @@ const BookingPage = () => {
 
     return (
         <div style={styles.container}>
+
+            <Sidebar onToggle={(state) => setSidebarOpen(state)} />
+
+                <main style={{
+                    ...styles.main,
+                    paddingLeft: sidebarOpen ? '300px' : '80px', 
+                }}>
+
             <header style={styles.header}>
                 <div>
                     <h1 style={styles.title}>Gestão de Reservas</h1>
                     <p style={styles.subtitle}>Controle de entradas, saídas e ocupação em tempo real.</p>
                 </div>
-                <button style={styles.addBtn} onClick={() => setIsModalOpen(true)}>
+                <button style={styles.addBtn} onClick={() => setIsModalBookingOpen(true)}>
                     + Nova Reserva
                 </button>
             </header>
@@ -140,10 +150,10 @@ const BookingPage = () => {
                     </tbody>
                 </table>
             </div>
-
+        </main>
             <ModalReserva 
-                isOpen={isModalOpen} 
-                onClose={() => { setIsModalOpen(false); fetchReservas(); }} 
+                isOpen={isModalBookingOpen} 
+                onClose={() => { setIsModalBookingOpen(false); fetchReservas(); }} 
                 funcionarioId={usuarioLogado?.id}
             />
         </div>
@@ -151,9 +161,37 @@ const BookingPage = () => {
 };
 
 const styles = {
-    container: { padding: '40px', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: 'Inter, sans-serif' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
-    title: { fontSize: '28px', fontWeight: '800', color: '#0f172a', margin: 0 },
+    container: {
+        padding: '40px',
+        backgroundColor: '#f8fafc',
+        minHeight: '100vh',
+        fontFamily: 'Inter, sans-serif',
+        width: '100%',
+        overflowX: 'hidden'
+    },
+    header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '35px'
+    },
+    main: {
+        flex: 1,
+        paddingTop: '40px',
+        paddingRight: '40px',
+        paddingBottom: '40px',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+        minwidth: '0',
+        boxSizing: 'border-box'
+    },
+    title: {
+        fontSize: '28px',
+        fontWeight: '800',
+        color: '#0f172a',
+        margin: 0
+    },
     subtitle: { fontSize: '15px', color: '#64748b', margin: '5px 0 0 0' },
     addBtn: { backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' },
     filterBar: { display: 'flex', gap: '20px', marginBottom: '25px', borderBottom: '1px solid #e2e8f0' },
