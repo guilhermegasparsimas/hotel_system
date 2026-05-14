@@ -1,0 +1,199 @@
+/* RoomPage.module.css */
+.container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+.main {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+}
+
+.welcome {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+    letter-spacing: -1px;
+}
+
+.dateText {
+    color: #64748b;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.addBtn {
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+    transition: 0.3s;
+}
+
+.addBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px -3px rgba(59, 130, 246, 0.4);
+}
+
+.filterBar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.filterBtn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+    background-color: #fff;
+    color: #64748b;
+    transition: all 0.3s ease;
+}
+
+.filterBtnActive {
+    background-color: #0f172a;
+    color: #fff;
+    border-color: #0f172a;
+    transform: scale(1.05);
+}
+
+.roomGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.roomCard {
+    background-color: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid transparent;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* O efeito de hover agora é via CSS puro, muito mais leve! */
+.roomCard:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.statusBadge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.roomContent {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.roomType {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.roomNumber {
+    font-size: 32px;
+    font-weight: 900;
+    color: #1e293b;
+}
+
+.roomPrice {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 8px;
+}
+
+.cardActions {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.iconBtnReserve {
+    width: 100%;
+    padding: 12px;
+    background-color: #0f172a;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.operationalActions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 15px;
+}
+
+.circleBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background-color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+.circleBtn:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.loader {
+    text-align: center;
+    padding: 100px;
+    color: #94a3b8;
+    font-weight: 600;
+}

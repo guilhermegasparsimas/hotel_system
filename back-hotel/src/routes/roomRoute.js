@@ -6,9 +6,10 @@ import { verificarToken } from '../middlewares/authMiddleware.js';
 const roomRouter = express.Router();
 
 roomRouter.get('/stats', verificarToken, getStats);
+
 roomRouter.get('/', verificarToken, getAllRooms);
 roomRouter.post('/', verificarToken, authorizeEmployee, validateRoomData, createRoom);
-roomRouter.put('/status', verificarToken, authorizeEmployee,updateRoomStatus);
+roomRouter.patch('/:id/status', verificarToken, authorizeEmployee,updateRoomStatus);
 roomRouter.delete('/:id', verificarToken, deleteRoom);
 
 export default roomRouter;

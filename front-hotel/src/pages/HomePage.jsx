@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import ModalNovoQuarto from '../components/Quarto/ModalNovoQuarto.jsx';
 import ModalNovoHospede from '../components/Hospede/ModalNovoHospede.jsx';
@@ -16,6 +16,8 @@ const HomePage = () => {
         manutencao: 0
     });
 
+    const [hoveredCard, setHoveredCard] = useState(null);
+
     const [isModalQuartoOpen, setIsModalQuartoOpen] = useState(false);
     const [isModalHospedeOpen, setIsModalHospedeOpen] = useState(false);
 
@@ -26,8 +28,15 @@ const HomePage = () => {
             const response = await axios.get('http://localhost:7070/quartos/stats', {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setStats(response.data);
+
+            if(response.data && 'disponiveis' in response.data) {
+                console.log("Home atualizada:", response.data);
+                setStats(response.data);
+            } else {
+                console.warn("Resposta inesperada para stats:", response.data);
+            }
         } catch (err) {
+            console.error("Erro no fetchStats:", err);
             if (err.response?.status === 401) handleLogout();
         }
     }, []);
@@ -35,24 +44,42 @@ const HomePage = () => {
     useEffect(() => {
         const savedUser = localStorage.getItem('usuario');
         const token = localStorage.getItem('token');
+
         if (!savedUser || !token) {
-            navigate('/login');
-        } else {
-            setUser(JSON.parse(savedUser));
-            fetchStats();
-            const interval = setInterval(fetchStats, 5000);
-            return () => clearInterval(interval);
+            navigate('/auth/login');
+            return;
         }
-    }, [navigate, fetchStats]);
+
+        setUser(JSON.parse(savedUser));
+        fetchStats();
+
+            const interval = setInterval(() => {
+                fetchStats();
+            }, 10000);
+
+        return () => clearInterval(interval);   
+
+    }, [navigate]);
 
     const handleLogout = () => {
         localStorage.clear();
         navigate('/login');
     };
 
+    const handleFilterNavigate = (status) => {
+        navigate('/quartos', { state: { filtroInicial: status } });
+    };
+
     if (!user) return null;
     const isStaff = user.tipo === 'GERENTE' || user.tipo === 'RECEPCIONISTA';
     const formatNumber = (num) => (num < 10 ? `0${num}` : num);
+
+    const statCards = [
+        { id: 'DISPONIVEL', label: 'Disponíveis', value: stats.disponiveis, color: '#10b981' },
+        { id: 'OCUPADO', label: 'Ocupados', value: stats.ocupados, color: '#ef4444' },
+        { id: 'LIMPEZA', label: 'Em Limpeza', value: stats.limpeza, color: '#f59e0b' },
+        { id: 'MANUTENCAO', label: 'Manutenção', value: stats.manutencao, color: '#6b7280' },
+    ];
 
     return (
         <div style={styles.container}>
@@ -60,8 +87,7 @@ const HomePage = () => {
 
             <main style={{
                 ...styles.main,
-                // O segredo está em ajustar o padding e a largura baseada na sidebar
-                paddingLeft: sidebarOpen ? '300px' : '80px', 
+                paddingLeft: sidebarOpen ? '300px' : '80px',
                 width: '100%',
             }}>
                 <header style={styles.header}>
@@ -81,25 +107,31 @@ const HomePage = () => {
                 </header>
 
                 <h2 style={styles.sectionTitle}>Status Operacional</h2>
-                
-                {/* O Grid agora usa auto-fill para preencher o espaço suavemente */}
+
                 <section style={styles.grid}>
-                    <div style={{ ...styles.card, borderTop: '4px solid #10b981' }}>
-                        <h3 style={styles.cardTitle}>Disponíveis</h3>
-                        <p style={{ ...styles.cardValue, color: '#10b981' }}>{formatNumber(stats.disponiveis)}</p>
-                    </div>
-                    <div style={{ ...styles.card, borderTop: '4px solid #ef4444' }}>
-                        <h3 style={styles.cardTitle}>Ocupados</h3>
-                        <p style={{ ...styles.cardValue, color: '#ef4444' }}>{formatNumber(stats.ocupados)}</p>
-                    </div>
-                    <div style={{ ...styles.card, borderTop: '4px solid #f59e0b' }}>
-                        <h3 style={styles.cardTitle}>Em Limpeza</h3>
-                        <p style={{ ...styles.cardValue, color: '#f59e0b' }}>{formatNumber(stats.limpeza)}</p>
-                    </div>
-                    <div style={{ ...styles.card, borderTop: '4px solid #6b7280' }}>
-                        <h3 style={styles.cardTitle}>Manutenção</h3>
-                        <p style={{ ...styles.cardValue, color: '#6b7280' }}>{formatNumber(stats.manutencao)}</p>
-                    </div>
+                    {statCards.map((card) => (
+                        <div
+                            key={card.id}
+                            onMouseEnter={() => setHoveredCard(card.id)}
+                            onMouseLeave={() => setHoveredCard(null)}
+                            onClick={() => handleFilterNavigate(card.id)}
+                            style={{
+                                ...styles.card,
+                                borderTop: `4px solid ${card.color}`,
+                                transform: hoveredCard === card.id ? 'translateY(-12px)' : 'translateY(0)',
+                                boxShadow: hoveredCard === card.id
+                                    ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                                    : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                                borderColor: hoveredCard === card.id ? card.color : '#f1f5f9'
+                            }}
+                        >
+                            <div style={styles.cardHeader}>
+                                <h3 style={styles.cardTitle}>{card.label}</h3>
+                                <span style={{ ...styles.statusDot, backgroundColor: card.color }}></span>
+                            </div>
+                            <p style={{ ...styles.cardValue, color: card.color }}>{formatNumber(card.value)}</p>
+                        </div>
+                    ))}
                 </section>
 
                 {isStaff && (
@@ -112,7 +144,7 @@ const HomePage = () => {
                             <button style={styles.secondaryAction} onClick={() => setIsModalHospedeOpen(true)}>
                                 <span>👤</span> Novo Hóspede
                             </button>
-                            <button style={styles.maintenanceAction} onClick={() => navigate('/quartos', { state: { filtroInicial: 'MANUTENCAO' } })}>
+                            <button style={styles.maintenanceAction} onClick={() => handleFilterNavigate('MANUTENCAO')}>
                                 <span>🔧</span> Ver Manutenções
                             </button>
                         </div>
@@ -127,64 +159,33 @@ const HomePage = () => {
 };
 
 const styles = {
-    container: { 
-        display: 'flex', 
-        width: '100%', 
-        minHeight: '100vh', 
-        backgroundColor: '#f8fafc', 
-        fontFamily: '"Inter", sans-serif',
-        overflowX: 'hidden' 
-    },
-    main: { 
-        flex: 1, 
-        paddingTop: '40px',
-        paddingRight: '40px',
-        paddingBottom: '40px',
-        display: 'flex', 
-        flexDirection: 'column', 
-        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)', 
-        minHeight: '100vh',
-        boxSizing: 'border-box'
-    },
+    // ... mantive seus estilos base e adicionei as melhorias de transição ...
+    container: { display: 'flex', width: '100%', minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: '"Inter", sans-serif', overflowX: 'hidden' },
+    main: { flex: 1, paddingTop: '40px', paddingRight: '40px', paddingBottom: '40px', display: 'flex', flexDirection: 'column', transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)', minHeight: '100vh', boxSizing: 'border-box' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
     welcome: { fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: 0, letterSpacing: '-1px' },
     roleTag: { fontSize: '11px', backgroundColor: '#e2e8f0', color: '#475569', padding: '6px 14px', borderRadius: '8px', fontWeight: '800', marginTop: '10px', display: 'inline-block', textTransform: 'uppercase' },
     dateText: { color: '#64748b', fontSize: '14px', fontWeight: '500' },
     sectionTitle: { fontSize: '20px', color: '#1e293b', marginBottom: '20px', fontWeight: '700', letterSpacing: '-0.5px' },
-    
-    grid: { 
-        display: 'grid', 
-        // Usando minmax flexível para evitar quebra feia
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
-        gap: '25px', 
-        marginBottom: '50px' 
-    },
-    
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px', marginBottom: '50px' },
     card: {
         backgroundColor: '#fff',
         padding: '30px',
         borderRadius: '24px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         textAlign: 'center',
         border: '1px solid #f1f5f9',
-        transition: 'all 0.3s ease'
+        cursor: 'pointer',
+        // Transição suave para o efeito flutuante
+        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
     },
-    cardTitle: { fontSize: '12px', color: '#64748b', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800' },
+    cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' },
+    statusDot: { width: '12px', height: '12px', borderRadius: '50%', display: 'inline-block', boxShadow: '0 0 6px rgba(0,0,0,0.1)' },
+    cardTitle: { fontSize: '12px', color: '#64748b', margin: 0, textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800' },
     cardValue: { fontSize: '48px', fontWeight: '900', margin: 0, letterSpacing: '-2px' },
-    
     actionRow: { display: 'flex', gap: '15px', flexWrap: 'wrap' },
-    primaryAction: {
-        padding: '16px 28px', borderRadius: '16px', border: 'none', backgroundColor: '#3b82f6', color: '#fff',
-        fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
-    },
-    secondaryAction: {
-        padding: '16px 28px', borderRadius: '16px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#1e293b',
-        fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
-    },
-    maintenanceAction: {
-        padding: '16px 28px', borderRadius: '16px', border: 'none', backgroundColor: '#0f172a', color: '#fff',
-        fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s'
-    }
+    primaryAction: { padding: '16px 28px', borderRadius: '16px', border: 'none', backgroundColor: '#3b82f6', color: '#fff', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s' },
+    secondaryAction: { padding: '16px 28px', borderRadius: '16px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#1e293b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s' },
+    maintenanceAction: { padding: '16px 28px', borderRadius: '16px', border: 'none', backgroundColor: '#0f172a', color: '#fff', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s' }
 };
 
 export default HomePage;

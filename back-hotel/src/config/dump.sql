@@ -58,8 +58,8 @@ CREATE TABLE `reservas` (
   `quarto_id` INT NOT NULL,
   `hospede_id` INT NOT NULL,
   `funcionario_id` INT NULL,
-  `data_entrada` DATETIME NOT NULL,
-  `data_saida` DATETIME NOT NULL, 
+  `data_checkin` DATETIME NOT NULL,
+  `checkout` DATETIME NOT NULL, 
   `valor_total` DECIMAL(10, 2) DEFAULT 0.00, 
   `status_reserva` ENUM('CONFIRMADA', 'CHECKIN', 'CHECKOUT', 'CANCELADA') DEFAULT 'CONFIRMADA',
   `status_pagamento` ENUM('PENDENTE', 'PAGO', 'PARCIAL') DEFAULT 'PENDENTE',
@@ -86,3 +86,7 @@ CREATE TABLE `reservas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 select * from usuario;
+select * from quartos;
+select * from hospedes;
+
+

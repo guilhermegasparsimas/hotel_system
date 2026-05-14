@@ -1,12 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import CadasterUser from './pages/CadasterUser';
-import HomePage from './pages/HomePage.jsx';
-// import MinhasReservas from './components/Reserva/MinhasReservas.jsx';
-import LoginUser from './pages/LoginPage.jsx';
+import BookingPage from './pages/BookingPage/BookingPage.jsx';
 import HospedePage from './pages/HospedePage.jsx';
-import RoomPage from './pages/RoomPage.jsx';
-import BookingPage from './pages/BookingPage.jsx';
+import LoginUser from './pages/LoginPage.jsx';
+import HomePage from './pages/HomePage.jsx';
+import RoomPage from './pages/RoomPage/RoomPage.jsx';
 import './App.css';
+// import MinhasReservas from './components/Reserva/MinhasReservas.jsx';
 
 function App() {
   return (

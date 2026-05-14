@@ -4,7 +4,7 @@ const logActivity = async (idUsuario, acao, detalhes) => {
     try {
         await db.query(
             "INSERT INTO logs (usuario_id, acao, detalhes) VALUES (?, ?, ?)",
-            [idUsuario, acao, detalhes]
+            [idUsuario || null, acao, detalhes]
         );
     } catch (erro) {
         console.error("Erro ao registrar log:", erro.message);
@@ -14,8 +14,8 @@ const logActivity = async (idUsuario, acao, detalhes) => {
 const createRoom = async (req, res) => {
     try {
         const { room_number, tipo, preco, capacidade, descricao } = req.body;
-        
-        const idFuncionario = req.user?.id || req.user?.sub; 
+
+        const idFuncionario = req.user?.id || req.user?.sub;
 
         if (!room_number || !tipo || !preco) {
             return res.status(400).json({ message: "Número, tipo e preço são obrigatórios." });
@@ -29,18 +29,18 @@ const createRoom = async (req, res) => {
         if (rows && rows.length > 0) {
             return res.status(400).json({ message: "Este número de quarto já está cadastrado." });
         }
-        
+
 
         const [result] = await db.query(
-            "INSERT INTO quartos (room_number, tipo, preco, capacidade, descricao, status) VALUES (?, ?, ?, ?, ?, ?)", 
+            "INSERT INTO quartos (room_number, tipo, preco, capacidade, descricao, status) VALUES (?, ?, ?, ?, ?, ?)",
             [room_number, tipo, preco, capacidade || 1, descricao || null, 'DISPONIVEL']
         );
 
         if (idFuncionario) {
             try {
                 await logActivity(
-                    idFuncionario, 
-                    "CRIAR_QUARTO", 
+                    idFuncionario,
+                    "CRIAR_QUARTO",
                     `Quarto ${room_number} cadastrado com sucesso.`
                 );
             } catch (logError) {
@@ -49,9 +49,9 @@ const createRoom = async (req, res) => {
             }
         }
 
-        return res.status(201).json({ 
+        return res.status(201).json({
             message: "Quarto cadastrado com sucesso.",
-            id: result.insertId 
+            id: result.insertId
         });
 
     } catch (error) {
@@ -70,7 +70,7 @@ const getAllRooms = async (req, res) => {
         const quartosDisponiveis = listaQuartos.filter(q => q.status === 'DISPONIVEL').length;
 
         let alertaOverbooking = null;
-        if(totalQuartos > 0 && quartosDisponiveis <= totalQuartos * 0.1) {
+        if (totalQuartos > 0 && quartosDisponiveis <= totalQuartos * 0.1) {
             alertaOverbooking = "Capacidade próxima do limite!";
         }
 
@@ -87,8 +87,9 @@ const getAllRooms = async (req, res) => {
 
 const updateRoomStatus = async (req, res) => {
     try {
-        const { id, novoStatus } = req.body;
-        const idFuncionario = req.user?.id;
+        const { id } = req.params;
+        const { status: novoStatus } = req.body;
+        const idFuncionario = req.user?.id || req.user?.sub;
 
         const statusValidos = ["DISPONIVEL", "OCUPADO", "MANUTENCAO", "LIMPEZA"];
         if (!statusValidos.includes(novoStatus?.toUpperCase())) {
@@ -100,9 +101,11 @@ const updateRoomStatus = async (req, res) => {
             return res.status(404).json({ message: "Quarto não encontrado." });
         }
 
-        await db.query("UPDATE quartos SET status = ? WHERE id = ?", [novoStatus.toUpperCase(), id]);
+        const statusFormatado = novoStatus.toUpperCase();
 
-        await logActivity(idFuncionario, "ALTERAR_STATUS", `Quarto ${roomData[0].room_number} alterado para ${novoStatus}.`);
+        await db.query("UPDATE quartos SET status = ? WHERE id = ?", [statusFormatado, id]);
+
+        await logActivity(idFuncionario, "ALTERAR_STATUS", `Quarto ${roomData[0].room_number} alterado para ${statusFormatado}.`);
 
         return res.status(200).json({ message: "Status atualizado com sucesso." });
     } catch (erro) {
@@ -138,19 +141,33 @@ const deleteRoom = async (req, res) => {
     }
 };
 
- const getStats = async (req, res) => {
+const getStats = async (req, res) => {
     try {
-        const [rows] = await db.execute(`
-            SELECT 
-                 CAST(IFNULL(SUM(CASE WHEN status = 'DISPONIVEL' THEN 1 ELSE 0 END), 0) AS UNSIGNED) as disponiveis,
-                 CAST(IFNULL(SUM(CASE WHEN status = 'OCUPADO' THEN 1 ELSE 0 END), 0) AS UNSIGNED) as ocupados,
-                 CAST(IFNULL(SUM(CASE WHEN status = 'LIMPEZA' THEN 1 ELSE 0 END), 0) AS UNSIGNED) as limpeza,
-                CAST(IFNULL(SUM(CASE WHEN status = 'MANUTENCAO' THEN 1 ELSE 0 END), 0) AS UNSIGNED) as manutencao
-            FROM quartos
-        `);
-        res.json(rows[0]);
-    } catch (error) {
-        res.status(500).json({ message: "Erro ao buscar estatísticas" });
+        const [rows] = await db.query(
+            "SELECT status, COUNT(*) as total FROM quartos GROUP BY status"
+        );
+
+        const stats = {
+            disponiveis: 0,
+            ocupados: 0,
+            limpeza: 0,
+            manutencao: 0
+        };
+
+        rows.forEach(row => {
+            const statusAtual = row.status?.toUpperCase().trim();
+
+            if (statusAtual === "DISPONIVEL") stats.disponiveis = Number(row.total);
+            if (statusAtual === "OCUPADO") stats.ocupados = Number(row.total);
+            if (statusAtual === "LIMPEZA") stats.limpeza = Number(row.total);
+            if (statusAtual === "MANUTENCAO") stats.manutencao = Number(row.total);
+        });
+
+        return res.status(200).json(stats);
+
+    } catch (erro) {
+        console.error("Erro crítico na rota /stats:", erro);
+        return res.status(500).json({ message: "Erro ao buscar estatísticas dos quartos." });
     }
 };
 
