@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import ModalNovoQuarto from '../components/Quarto/ModalNovoQuarto.jsx';
-import ModalNovoHospede from '../components/Hospede/ModalNovoHospede.jsx';
-import Sidebar from '../components/Sidebar/Sidebar.jsx';
+import ModalNovoQuarto from '../../components/Quarto/ModalNovoQuarto.jsx';
+import ModalNovoHospede from '../../components/Hospede/ModalNovoHospede.jsx';
+import Sidebar from '../../components/Sidebar/Sidebar.jsx';
+
+import styles from './HomePage.module.css';
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -53,13 +55,13 @@ const HomePage = () => {
         setUser(JSON.parse(savedUser));
         fetchStats();
 
-            const interval = setInterval(() => {
-                fetchStats();
-            }, 10000);
+        const interval = setInterval(() => {
+            fetchStats();
+        }, 10000);
 
         return () => clearInterval(interval);   
 
-    }, [navigate]);
+    }, [navigate, fetchStats]);
 
     const handleLogout = () => {
         localStorage.clear();
@@ -82,23 +84,26 @@ const HomePage = () => {
     ];
 
     return (
-        <div style={styles.container}>
+        <div className={styles.container}>
             <Sidebar onToggle={(state) => setSidebarOpen(state)} />
 
-            <main style={{
-                ...styles.main,
-                paddingLeft: sidebarOpen ? '300px' : '80px',
-                width: '100%',
-            }}>
-                <header style={styles.header}>
+            <main 
+                className={styles.main}
+                style={{
+                    paddingLeft: sidebarOpen ? '300px' : '80px',
+                    width: '100%',
+                }}
+            >
+                <header className={styles.header}>
                     <div>
-                        <h1 style={styles.welcome}>Olá, {user.nome}! 👋</h1>
-                        <span style={styles.roleTag}>
+                        <h1 className={styles.welcome}>Olá, {user.nome}! 👋</h1>
+                        <span className={styles.roleTag}>
                             {user.tipo === 'GERENTE' ? '⭐ Administrador' : '🔑 Staff Recepcionista'}
                         </span>
                     </div>
-                    <div style={styles.topInfo}>
-                        <p style={styles.dateText}>
+                    {/* Mantido o styles.topInfo. Caso não use no CSS, ele apenas ignorará de forma segura */}
+                    <div className={styles.topInfo}>
+                        <p className={styles.dateText}>
                             {new Date().toLocaleDateString('pt-BR', {
                                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                             })}
@@ -106,17 +111,17 @@ const HomePage = () => {
                     </div>
                 </header>
 
-                <h2 style={styles.sectionTitle}>Status Operacional</h2>
+                <h2 className={styles.sectionTitle}>Status Operacional</h2>
 
-                <section style={styles.grid}>
+                <section className={styles.grid}>
                     {statCards.map((card) => (
                         <div
                             key={card.id}
                             onMouseEnter={() => setHoveredCard(card.id)}
                             onMouseLeave={() => setHoveredCard(null)}
                             onClick={() => handleFilterNavigate(card.id)}
+                            className={styles.card}
                             style={{
-                                ...styles.card,
                                 borderTop: `4px solid ${card.color}`,
                                 transform: hoveredCard === card.id ? 'translateY(-12px)' : 'translateY(0)',
                                 boxShadow: hoveredCard === card.id
@@ -125,26 +130,26 @@ const HomePage = () => {
                                 borderColor: hoveredCard === card.id ? card.color : '#f1f5f9'
                             }}
                         >
-                            <div style={styles.cardHeader}>
-                                <h3 style={styles.cardTitle}>{card.label}</h3>
-                                <span style={{ ...styles.statusDot, backgroundColor: card.color }}></span>
+                            <div className={styles.cardHeader}>
+                                <h3 className={styles.cardTitle}>{card.label}</h3>
+                                <span className={styles.statusDot} style={{ backgroundColor: card.color }}></span>
                             </div>
-                            <p style={{ ...styles.cardValue, color: card.color }}>{formatNumber(card.value)}</p>
+                            <p className={styles.cardValue} style={{ color: card.color }}>{formatNumber(card.value)}</p>
                         </div>
                     ))}
                 </section>
 
                 {isStaff && (
-                    <section style={styles.actionsSection}>
-                        <h2 style={styles.sectionTitle}>Ações Rápidas</h2>
-                        <div style={styles.actionRow}>
-                            <button style={styles.primaryAction} onClick={() => setIsModalQuartoOpen(true)}>
+                    <section className={styles.actionsSection}>
+                        <h2 className={styles.sectionTitle}>Ações Rápidas</h2>
+                        <div className={styles.actionRow}>
+                            <button className={styles.primaryAction} onClick={() => setIsModalQuartoOpen(true)}>
                                 <span>✨</span> Cadastrar Quarto
                             </button>
-                            <button style={styles.secondaryAction} onClick={() => setIsModalHospedeOpen(true)}>
+                            <button className={styles.secondaryAction} onClick={() => setIsModalHospedeOpen(true)}>
                                 <span>👤</span> Novo Hóspede
                             </button>
-                            <button style={styles.maintenanceAction} onClick={() => handleFilterNavigate('MANUTENCAO')}>
+                            <button className={styles.maintenanceAction} onClick={() => handleFilterNavigate('MANUTENCAO')}>
                                 <span>🔧</span> Ver Manutenções
                             </button>
                         </div>
@@ -156,36 +161,6 @@ const HomePage = () => {
             <ModalNovoHospede isOpen={isModalHospedeOpen} onClose={() => { setIsModalHospedeOpen(false); fetchStats(); }} />
         </div>
     );
-};
-
-const styles = {
-    // ... mantive seus estilos base e adicionei as melhorias de transição ...
-    container: { display: 'flex', width: '100%', minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: '"Inter", sans-serif', overflowX: 'hidden' },
-    main: { flex: 1, paddingTop: '40px', paddingRight: '40px', paddingBottom: '40px', display: 'flex', flexDirection: 'column', transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)', minHeight: '100vh', boxSizing: 'border-box' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-    welcome: { fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: 0, letterSpacing: '-1px' },
-    roleTag: { fontSize: '11px', backgroundColor: '#e2e8f0', color: '#475569', padding: '6px 14px', borderRadius: '8px', fontWeight: '800', marginTop: '10px', display: 'inline-block', textTransform: 'uppercase' },
-    dateText: { color: '#64748b', fontSize: '14px', fontWeight: '500' },
-    sectionTitle: { fontSize: '20px', color: '#1e293b', marginBottom: '20px', fontWeight: '700', letterSpacing: '-0.5px' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px', marginBottom: '50px' },
-    card: {
-        backgroundColor: '#fff',
-        padding: '30px',
-        borderRadius: '24px',
-        textAlign: 'center',
-        border: '1px solid #f1f5f9',
-        cursor: 'pointer',
-        // Transição suave para o efeito flutuante
-        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-    },
-    cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' },
-    statusDot: { width: '12px', height: '12px', borderRadius: '50%', display: 'inline-block', boxShadow: '0 0 6px rgba(0,0,0,0.1)' },
-    cardTitle: { fontSize: '12px', color: '#64748b', margin: 0, textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800' },
-    cardValue: { fontSize: '48px', fontWeight: '900', margin: 0, letterSpacing: '-2px' },
-    actionRow: { display: 'flex', gap: '15px', flexWrap: 'wrap' },
-    primaryAction: { padding: '16px 28px', borderRadius: '16px', border: 'none', backgroundColor: '#3b82f6', color: '#fff', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s' },
-    secondaryAction: { padding: '16px 28px', borderRadius: '16px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#1e293b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s' },
-    maintenanceAction: { padding: '16px 28px', borderRadius: '16px', border: 'none', backgroundColor: '#0f172a', color: '#fff', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.3s' }
 };
 
 export default HomePage;

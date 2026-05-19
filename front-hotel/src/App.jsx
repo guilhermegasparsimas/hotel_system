@@ -3,8 +3,8 @@ import CadasterUser from './pages/CadasterUser';
 import BookingPage from './pages/BookingPage/BookingPage.jsx';
 import HospedePage from './pages/HospedePage.jsx';
 import LoginUser from './pages/LoginPage.jsx';
-import HomePage from './pages/HomePage.jsx';
 import RoomPage from './pages/RoomPage/RoomPage.jsx';
+import HomePage from './pages/HomePage/HomePage.jsx';
 import './App.css';
 // import MinhasReservas from './components/Reserva/MinhasReservas.jsx';
 
