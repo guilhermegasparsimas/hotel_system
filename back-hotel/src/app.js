@@ -17,6 +17,6 @@ app.use(userRouter);
 app.use('/auth', authRouter);
 app.use('/quartos', roomRouter);
 app.use('/hospedes', (await import('./routes/hospedeRoute.js')).default);
-app.use('/reservas', (await import('./routes/bookingRoute.js')).default);
+app.use('/', (await import('./routes/bookingRoute.js')).default);
 
 export { app };

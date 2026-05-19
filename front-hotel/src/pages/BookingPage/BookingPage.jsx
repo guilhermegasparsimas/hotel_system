@@ -12,14 +12,17 @@ const BookingPage = () => {
     const [loading, setLoading] = useState(true);
 
     const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+    const token = localStorage.getItem('token');
+
+    // Configuração padrão do cabeçalho para evitar repetição
+    const axiosConfig = {
+        headers: { Authorization: `Bearer ${token}` }
+    };
 
     const fetchReservas = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:7070/reservas', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.get('http://localhost:7070/reservas', axiosConfig);
             setReservas(response.data);
         } catch (error) {
             console.error("Erro ao carregar reservas", error);
@@ -30,20 +33,39 @@ const BookingPage = () => {
 
     useEffect(() => { fetchReservas(); }, []);
 
-    const handleUpdateStatus = async (id, novoStatus) => {
-        if (!window.confirm(`Confirmar alteração para ${novoStatus}?`)) return;
+    // --- INTEGRAÇÃO COM OS MÉTODOS DO SEU CONTROLLER ---
+
+    const handleCheckIn = async (reserva) => {
+        if (!window.confirm(`Deseja realizar o Check-in para ${reserva.hospede_nome}?`)) return;
         try {
-            const token = localStorage.getItem('token');
-            await axios.patch(`http://localhost:7070/reservas/${id}/status`, 
-                { status: novoStatus },
-                { headers: { Authorization: `Bearer ${token}` }}
-            );
+            // Conecta com o seu método: const { quarto_id, hospede_id, valor_total } = req.body;
+            await axios.post('http://localhost:7070/reservas/checkin', {
+                quarto_id: reserva.quarto_id,
+                hospede_id: reserva.hospede_id,
+                valor_total: reserva.valor_total
+            }, axiosConfig);
+
             fetchReservas();
         } catch (error) {
-            alert("Erro ao atualizar status.");
+            alert(error.response?.data?.message || "Erro ao realizar check-in.");
         }
     };
 
+    const handleCheckOut = async (reserva) => {
+        if (!window.confirm(`Deseja finalizar a estadia no quarto ${reserva.quarto_numero}?`)) return;
+        try {
+            // Conecta com o seu método: const { quarto_id } = req.body;
+            await axios.post('http://localhost:7070/reservas/checkout', {
+                quarto_id: reserva.quarto_id
+            }, axiosConfig);
+
+            fetchReservas();
+        } catch (error) {
+            alert(error.response?.data?.message || "Erro ao realizar check-out.");
+        }
+    };
+
+    // Estilo dos Badges (Mantido)
     const getStatusStyle = (status) => {
         switch (status) {
             case 'CONFIRMADA': return { bg: '#e0f2fe', color: '#0369a1' };
@@ -64,7 +86,6 @@ const BookingPage = () => {
                         <h1 className={styles.title}>Gestão de Reservas</h1>
                         <p className={styles.subtitle}>Acompanhe a ocupação e o fluxo de hóspedes.</p>
                     </div>
-                    {/* Botão Moderno com Ícone */}
                     <button className={styles.addBtn} onClick={() => setIsModalBookingOpen(true)}>
                         <span style={{ fontSize: '20px' }}>+</span> Nova Reserva
                     </button>
@@ -72,7 +93,7 @@ const BookingPage = () => {
 
                 <div className={styles.filterBar}>
                     {['TODAS', 'CONFIRMADA', 'CHECKIN', 'CHECKOUT', 'CANCELADA'].map(status => (
-                        <button 
+                        <button
                             key={status}
                             onClick={() => setFiltroStatus(status)}
                             className={`${styles.filterTab} ${filtroStatus === status ? styles.filterTabActive : ''}`}
@@ -119,20 +140,24 @@ const BookingPage = () => {
                                                     <span className={styles.priceText}>R$ {reserva.valor_total}</span>
                                                 </td>
                                                 <td className={styles.td}>
-                                                    <span className={styles.statusBadge} style={{backgroundColor: styleStatus.bg, color: styleStatus.color}}>
+                                                    <span className={styles.statusBadge} style={{ backgroundColor: styleStatus.bg, color: styleStatus.color }}>
                                                         {reserva.status_reserva}
                                                     </span>
                                                 </td>
                                                 <td className={styles.td}>
                                                     <div className={styles.actions}>
+                                                        {/* Botão de Check-in agora chama o endpoint POST correto */}
                                                         {reserva.status_reserva === 'CONFIRMADA' && (
-                                                            <button onClick={() => handleUpdateStatus(reserva.id, 'CHECKIN')} className={styles.actionBtnCheckin}>Fazer Check-in</button>
+                                                            <button onClick={() => handleCheckIn(reserva)} className={styles.actionBtnCheckin}>Fazer Check-in</button>
                                                         )}
+
+                                                        {/* Botão de Checkout agora chama o endpoint POST correto */}
                                                         {reserva.status_reserva === 'CHECKIN' && (
-                                                            <button onClick={() => handleUpdateStatus(reserva.id, 'CHECKOUT')} className={styles.actionBtnCheckout}>Finalizar Checkout</button>
+                                                            <button onClick={() => handleCheckOut(reserva)} className={styles.actionBtnCheckout}>Finalizar Checkout</button>
                                                         )}
+
                                                         {['CONFIRMADA', 'CHECKIN'].includes(reserva.status_reserva) && (
-                                                            <button onClick={() => handleUpdateStatus(reserva.id, 'CANCELADA')} className={styles.actionBtnCancel} title="Cancelar Reserva">&times;</button>
+                                                            <button className={styles.actionBtnCancel} title="Cancelar Reserva">&times;</button>
                                                         )}
                                                     </div>
                                                 </td>
@@ -145,9 +170,9 @@ const BookingPage = () => {
                 </div>
             </main>
 
-            <ModalReserva 
-                isOpen={isModalBookingOpen} 
-                onClose={() => { setIsModalBookingOpen(false); fetchReservas(); }} 
+            <ModalReserva
+                isOpen={isModalBookingOpen}
+                onClose={() => { setIsModalBookingOpen(false); fetchReservas(); }}
                 funcionarioId={usuarioLogado?.id}
             />
         </div>

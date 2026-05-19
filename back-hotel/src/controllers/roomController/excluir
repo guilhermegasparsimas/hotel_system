@@ -1,42 +1,59 @@
-const fetchStats = useCallback(async () => {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        try {
-            const response = await axios.get('http://localhost:7070/quartos/stats', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            // Só atualiza o estado se a resposta contiver as propriedades da Home
-            if (response.data && 'disponiveis' in response.data) {
-                console.log("Home atualizada com sucesso:", response.data);
-                setStats(response.data);
-            } else {
-                console.warn("stats ignorado para evitar sumir com os dados:", response.data);
+const handleConfirmar = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const token = localStorage.getItem('token');
+
+    if (!reserva.quartoId || !reserva.hospedeId) {
+        alert("Por favor, selecione um hóspede e um quarto.");
+        setLoading(false);
+        return;
+    }
+
+    // 1. Formata as datas adicionando o horário para o padrão DATETIME do MySQL (AAAA-MM-DD HH:MM:SS)
+    const dataCheckinFormatada = `${reserva.dataCheckin} 14:00:00`;
+    const dataCheckoutFormatada = `${reserva.dataCheckout} 12:00:00`;
+
+    // 2. Valida o funcionário de forma estrita para não quebrar a chave estrangeira (FK)
+    // Se o ID for inválido, nulo ou undefined, envia null puro para o banco aceitar
+    const idFuncionarioValido = (funcionarioId && !isNaN(funcionarioId)) ? parseInt(funcionarioId) : null;
+
+    // Log para você conferir no console antes de enviar
+    console.log("Dados finais enviados ao banco:", {
+        quarto_id: parseInt(reserva.quartoId),
+        hospede_id: parseInt(reserva.hospedeId),
+        funcionario_id: idFuncionarioValido,
+        data_checkin: dataCheckinFormatada,
+        checkout: dataCheckoutFormatada,
+        valor_total: reserva.valorTotal
+    });
+
+    try {
+        const response = await axios.post('http://localhost:7070/reservas', {
+            quarto_id: parseInt(reserva.quartoId),
+            hospede_id: parseInt(reserva.hospedeId),
+            funcionario_id: idFuncionarioValido,
+            data_checkin: dataCheckinFormatada,
+            checkout: dataCheckoutFormatada,
+            valor_total: reserva.valorTotal
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
-        } catch (err) {
-            console.error("Erro no fetchStats:", err);
-            if (err.response?.status === 401) handleLogout();
+        });
+
+        alert("Reserva vinculada ao banco com sucesso!");
+        setReserva({ quartoId: '', hospedeId: '', dataCheckin: '', dataCheckout: '', valorTotal: 0 });
+        onClose();
+
+    } catch (error) {
+        if (error.response && error.response.data) {
+            alert(error.response.data.message || "Erro interno no servidor (500).");
+        } else {
+            alert("Erro de conexão com o servidor.");
         }
-    }, []); 
-
-    useEffect(() => {
-        const savedUser = localStorage.getItem('usuario');
-        const token = localStorage.getItem('token');
-        
-        if (!savedUser || !token) {
-            navigate('/auth/login');
-            return;
-        } 
-
-        setUser(JSON.parse(savedUser));
-        
-        // Executa imediatamente ao carregar
-        fetchStats();
-        
-        const interval = setInterval(() => {
-            fetchStats();
-        }, 10000); 
-        
-        // Limpa o timer ao sair da página
-        return () => clearInterval(interval);
-    }, [navigate]); // REMOVIDO fetchStats daqui para quebrar o loop infinito de render
+        console.error("Erro no envio Axios:", error);
+    } finally {
+        setLoading(false);
+    }
+};
